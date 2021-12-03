@@ -12,18 +12,18 @@ const DrawerManager = require("./DrawerManager");
 const { Player } = require("../modules/multiplayer/gomoku");
 
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
-import BoardSizeModal from "./bugout/BoardSizeModal";
-import GameLobbyModal from "./bugout/WelcomeModal";
-import IdleStatusModal from "./bugout/IdleStatusModal";
-import InvalidLinkModal from "./bugout/InvalidLinkModal";
-import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
-import OpponentPassedModal from "./bugout/OpponentPassedModal";
-import OpponentQuitModal from "./bugout/OpponentQuitModal";
-import ReconnectModal from "./bugout/ReconnectModal";
-import WaitForUndoModal from "./bugout/WaitForUndoModal";
-import WaitForOpponentModal from "./bugout/WaitForOpponentModal";
-import WaitForYourColorModal from "./bugout/WaitForYourColorModal";
-import YourColorChosenModal from "./bugout/YourColorChosenModal";
+import BoardSizeModal from "./gomoku/BoardSizeModal";
+import GameLobbyModal from "./gomoku/WelcomeModal";
+import IdleStatusModal from "./gomoku/IdleStatusModal";
+import InvalidLinkModal from "./gomoku/InvalidLinkModal";
+import MultiplayerColorPrefModal from "./gomoku/MultiplayerColorPrefModal";
+import OpponentPassedModal from "./gomoku/OpponentPassedModal";
+import OpponentQuitModal from "./gomoku/OpponentQuitModal";
+import ReconnectModal from "./gomoku/ReconnectModal";
+import WaitForUndoModal from "./gomoku/WaitForUndoModal";
+import WaitForOpponentModal from "./gomoku/WaitForOpponentModal";
+import WaitForYourColorModal from "./gomoku/WaitForYourColorModal";
+import YourColorChosenModal from "./gomoku/YourColorChosenModal";
 
 const sgf = require("@sabaki/sgf");
 const influence = require("@sabaki/influence");
