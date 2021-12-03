@@ -7,7 +7,6 @@ const { BoardSize, EntryMethod } = require("../../modules/multiplayer/gomoku");
 
 const ALLOWED_ENTRY_METHODS = [
   EntryMethod.CREATE_PRIVATE,
-  EntryMethod.PLAY_BOT,
 ];
 
 const isTurnedOn = (entryMethod) => {

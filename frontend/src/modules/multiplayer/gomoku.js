@@ -8,7 +8,7 @@ const Visibility = {
 
 /**
  * Enum representing the status of an initial connection
- * attempt from Sabaki client to Bugout gateway
+ * attempt from Sabaki client to Gomoku gateway
  */
 const ConnectionState = {
   DISCONNECTED: 0,
@@ -27,7 +27,6 @@ const EntryMethod = {
   FIND_PUBLIC: 1,
   CREATE_PRIVATE: 2,
   JOIN_PRIVATE: 3,
-  PLAY_BOT: 4,
 };
 
 const IdleStatus = {

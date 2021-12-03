@@ -1,8 +1,8 @@
 # Browser
 
-This project is a direct descendant of [Sabaki](https://github.com/SabakiHQ/Sabaki). We are not affiliated with the Sabaki project.
+This project is a direct descendant of [Sabaki](https://github.com/SabakiHQ/Sabaki) and is derived from [BUGOUT/browser](https://github.com/Terkwood/BUGOUT/tree/unstable/browser)
 
-Thank you to the Sabaki author and community for making their project available under MIT license.
+Thank you to the Sabaki authors, the BUGOUT [author](https://github.com/Terkwood) and community for making their project available under MIT license.
 
 ## Run the frontend locally
 

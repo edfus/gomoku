@@ -5,7 +5,7 @@ function hide() {
   document.getElementById("popupmenu-overlay").remove();
 }
 
-const BUGOUT_HACK = 65;
+const HARDCODED_HACK = 65;
 
 function show(velement, x, y) {
   let element = render(velement, document.body).childNodes[0];
@@ -18,8 +18,8 @@ function show(velement, x, y) {
 
   element.style.left =
     x + width <= bodyWidth
-      ? x + BUGOUT_HACK
-      : Math.max(0, x + BUGOUT_HACK - width) + "px";
+      ? x + HARDCODED_HACK
+      : Math.max(0, x + HARDCODED_HACK - width) + "px";
   element.style.top =
     (y + height <= bodyHeight ? y : Math.max(0, y - height)) + "px";
 }

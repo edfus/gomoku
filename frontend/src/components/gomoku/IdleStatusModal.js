@@ -57,7 +57,7 @@ class IdleStatusModal extends Component {
         h(
           Dialog.Body,
           null,
-          `BUGOUT is initializing (${formatSince(idleStatus.since)}).`
+          `Gomoku is initializing (${formatSince(idleStatus.since)}).`
         )
       );
     }
@@ -73,7 +73,7 @@ class IdleStatusModal extends Component {
       h(
         Dialog.Body,
         null,
-        `BUGOUT has been idle ${formatSince(idleStatus.since)}.`
+        `Gomoku has been idle ${formatSince(idleStatus.since)}.`
       )
     );
   }

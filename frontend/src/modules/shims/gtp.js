@@ -1,4 +1,4 @@
-/// BUGOUT support for "gtp-like" multiplayer coordination
+// support for "gtp-like" multiplayer coordination
 
 const EventEmitter = require("events");
 const Board = require("../board");
@@ -15,7 +15,7 @@ const {
 
 // for dev: host port 33012 should be mapped to container 3012
 const GATEWAY_HOST_LOCAL = "ws://localhost:33012/gateway";
-const GATEWAY_HOST_REMOTE = "wss://your.host.here:443/gateway";
+const GATEWAY_HOST_REMOTE = "wss://api.gomoku.ml:443/";
 const GATEWAY_HOST = GATEWAY_HOST_LOCAL;
 
 const GATEWAY_BEEP_TIMEOUT_MS = 13333;
@@ -78,7 +78,7 @@ class Controller extends EventEmitter {
     this._webSocketController.stop();
   }
 
-  async sendCommand(command, subscriber = () => {}) {
+  async sendCommand(command, subscriber = () => { }) {
     if (this.webSocket == null) this.start();
 
     return await this._webSocketController.sendCommand(command, subscriber);
@@ -135,9 +135,6 @@ class WebSocketController extends EventEmitter {
     this.board = new Board(DEFAULT_BOARD_SIZE, DEFAULT_BOARD_SIZE);
 
     sabaki.events.on("human-color-selected", ({ humanColor }) => {
-      if (this.deferredPlayBot) {
-        this.deferredPlayBot(humanColor);
-      }
     });
 
     sabaki.events.on("choose-board-size", ({ boardSize }) => {
@@ -265,18 +262,10 @@ class WebSocketController extends EventEmitter {
       emitReadyState(this.webSocket, sabaki.events);
 
       this.identifySelf().then((_idOk) => {
-        // Bit of a dirty cheat: we know that playing
-        // against the AI doesn't require the kafka
-        // backend, so there's no need to wait for
-        // that part of the system to start up.
-        if (!this.gameId && this.entryMethod === EntryMethod.PLAY_BOT) {
-          this.setupBotGame();
-        } else {
-          // Until https://github.com/Terkwood/BUGOUT/issues/174
-          // is completed, we need to wait for the system to
-          // come online when we're playing against a human being.
-          this.waitForBugoutOnline().then((a, b) => this.onBugoutOnline(a, b));
-        }
+        // Until https://github.com/Terkwood/BUGOUT/issues/174
+        // is completed, we need to wait for the system to
+        // come online when we're playing against a human being.
+        this.waitForBugoutOnline().then((a, b) => this.onBugoutOnline(a, b));
       });
     });
   }
@@ -488,7 +477,7 @@ class WebSocketController extends EventEmitter {
     resolve({ id: null, error: false });
   }
 
-  async sendCommand(command, subscriber = () => {}) {
+  async sendCommand(command, subscriber = () => { }) {
     let isPassing = (v) => v[0] == 14 && isNaN(v[1]);
 
     let promise = new Promise((resolve, reject) => {

@@ -59,12 +59,12 @@ class PlayBar extends Component {
       let { left, top } = this.menuButtonElement.getBoundingClientRect();
       helper.popupMenu(
         [
-          {
-            label: t((p) => `About ${p.appName}…`, { appName: sabaki.appName }),
-            click: () =>
-              shell.openExternal("https://github.com/Terkwood/BUGOUT"),
-          },
-          { type: "separator" },
+          // {
+          //   label: t((p) => `About ${p.appName}…`, { appName: sabaki.appName }),
+          //   click: () =>
+          //     shell.openExternal("https://github.com/Terkwood/BUGOUT/😇"),
+          // },
+          // { type: "separator" },
           {
             label: t("Download SGF"),
             click: () => sabaki.saveFile(sabaki.state.representedFilename),

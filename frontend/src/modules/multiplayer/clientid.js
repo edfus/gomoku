@@ -1,7 +1,7 @@
 const uuidv4 = require("uuid/v4");
 
 const storageType = "localStorage";
-const clientIdKey = "bugoutClientId";
+const clientIdKey = "gomokuClientId";
 
 // Provides a randomized, persistent client ID
 const fromStorage = () => {

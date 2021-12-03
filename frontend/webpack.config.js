@@ -43,8 +43,8 @@ module.exports = (env, argv) => ({
       "uuid/v1": noopPath,
       "recursive-copy": noopPath,
       rimraf: noopPath,
-      "argv-split": path.join(__dirname, "src/modules/shims/argv-split"), // BUGOUT
-      "@sabaki/gtp": path.join(__dirname, "src/modules/shims/gtp"), // BUGOUT
+      "argv-split": path.join(__dirname, "src/modules/shims/argv-split"), // user(me)-defined modules
+      "@sabaki/gtp": path.join(__dirname, "src/modules/shims/gtp"), // user(me)-defined modules
       "./i18n": path.join(__dirname, "src/modules/shims/i18n"),
       "../i18n": path.join(__dirname, "src/modules/shims/i18n"),
       "../../i18n": path.join(__dirname, "src/modules/shims/i18n"),

@@ -32,12 +32,9 @@ class MultiplayerColorPrefModal extends Component {
         ? boardSize !== undefined
         : true;
 
-    let isBotEntry = entryMethod && entryMethod == EntryMethod.PLAY_BOT;
-
     let { showDialog, turnedOnOnce } = this.state;
 
-    let turnOn =
-      !isBotEntry &&
+    let turnOn = 
       ((isPrivateEntryWithBoardSizeDefined && !turnedOnOnce) || showDialog) &&
       idleStatus;
 

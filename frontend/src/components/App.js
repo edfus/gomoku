@@ -1,5 +1,3 @@
-const EDITION = "Slim";
-
 const EventEmitter = require("events");
 const { ipcRenderer, remote } = require("electron");
 const { app } = remote;
@@ -11,7 +9,7 @@ const DrawerManager = require("./DrawerManager");
 
 const { Player } = require("../modules/multiplayer/gomoku");
 
-// BUGOUT 🦹🏻‍ Bundle Bloat Protector
+// 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./gomoku/BoardSizeModal";
 import GameLobbyModal from "./gomoku/WelcomeModal";
 import IdleStatusModal from "./gomoku/IdleStatusModal";
@@ -78,16 +76,16 @@ class App extends Component {
       playVariation: null,
       showCoordinates: null,
       showMoveColorization: null,
-      showMoveNumbers: setting.get("view.show_move_numbers"), // 😇BUGOUT😇
+      showMoveNumbers: setting.get("view.show_move_numbers"), // 😇 Lord forgive us our bugs and lead us not into defects. Amen!
       showNextMoves: null,
       showSiblings: null,
       fuzzyStonePlacement: null,
       animateStonePlacement: null,
 
       // Sidebar
-      showGameGraph: false, // 😇BUGOUT😇
-      showCommentBox: false, // 😇BUGOUT😇
-      sidebarWidth: 120, // 😇BUGOUT😇
+      showGameGraph: false, // 😇 Lord forgive us our bugs and lead us not into defects. Amen!
+      showCommentBox: false, // 😇 Lord forgive us our bugs and lead us not into defects. Amen!
+      sidebarWidth: 120, // 😇 Lord forgive us our bugs and lead us not into defects. Amen!
       graphGridSize: null,
       graphNodeSize: null,
 
@@ -137,7 +135,7 @@ class App extends Component {
     this.updateSettingState();
 
     // from GatewayConn
-    console.log(`Welcome to Sabaki - BUGOUT ${EDITION} Edition`);
+    console.info(`Welcome to Sabaki - BUGOUT - Gomoku Edition 😇`);
   }
 
   componentDidMount() {
@@ -543,7 +541,7 @@ class App extends Component {
       if (button === 0) {
         if (board.get(vertex) === 0) {
           let autoGenmove = setting.get("gtp.auto_genmove");
-          // BUGOUT safety: check that we're allowed to move,
+          // Safety: check that we're allowed to move,
           // and not accidentally bouncing the finger
           // and sending some additional move as the opponent
           let color = this.inferredState.currentPlayer > 0 ? "B" : "W";
@@ -554,12 +552,9 @@ class App extends Component {
             this.state.multiplayer.yourColor.event.yourColor &&
             color === this.state.multiplayer.yourColor.event.yourColor[0];
 
-          let botColorSatisfied =
-            this.state.multiplayer.botColor &&
-            this.state.multiplayer.botColor[0] !== color;
           if (
             this.state.multiplayer &&
-            (multiplayerColorSatisfied || botColorSatisfied)
+            (multiplayerColorSatisfied)
           ) {
             this.makeMove(vertex, { sendToEngine: autoGenmove });
           }
@@ -799,7 +794,7 @@ class App extends Component {
     this.recordHistory({ prevGameIndex, prevTreePosition });
   }
 
-  // 😇 BUGOUT trimmed 😇
+  // 😇 Trimmed 😇 Lord forgive us our bugs and lead us not into defects. Amen!
 
   // Node Actions
 
@@ -848,7 +843,7 @@ class App extends Component {
     };
   }
 
-  // BUGOUT calls this
+  // 😇 calls this 
   setGameInfo(tree, data) {
     let newTree = tree.mutate((draft) => {
       if ("size" in data) {
@@ -864,7 +859,7 @@ class App extends Component {
           else value = value.join(":");
 
           //
-          // BUGOUT: do not update default setting
+          // 😇 do not update default setting
           //
 
           draft.updateProperty(draft.root.id, "SZ", [value]);
@@ -1009,7 +1004,7 @@ class App extends Component {
               },
             });
           },
-        }); // 😇BUGOUT😇
+        }); // 😇 Lord forgive us our bugs and lead us not into defects. Amen!
         this.attachedEngineSyncers[i] = syncer;
 
         syncer.on("busy-changed", () => {
@@ -1304,7 +1299,7 @@ class App extends Component {
         }),
       },
 
-      // ↓ BUGOUT ↓
+      // ↓ 😇 ↓
       h(GameLobbyModal, {
         joinPrivateGame: this.gomoku.joinPrivateGame.join,
         idleStatus:
@@ -1355,7 +1350,7 @@ class App extends Component {
       h(OpponentPassedModal),
       h(OpponentQuitModal),
       h(WaitForUndoModal),
-      // ↑ BUGOUT ↑
+      // ↑ 😇 ↑
 
       h(MainView, state),
       h(DrawerManager, state)
