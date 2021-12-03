@@ -7,10 +7,10 @@ const {
   BoardSize,
   EntryMethod,
   IdleStatus,
-} = require("../../modules/multiplayer/bugout");
+} = require("../../modules/multiplayer/gomoku");
 
 const FRONT_MATTER_TEXT =
-  "We recommend playing against KataGo, a leading AI running on a power-efficient device. ";
+  "This Gomoku UI implementation is derived in part from @SabakiHQ/Sabaki's great work, check 'em out!";
 
 class WelcomeModal extends Component {
   constructor() {
@@ -29,14 +29,7 @@ class WelcomeModal extends Component {
     let frontMatter = h(
       "div",
       { id: "welcome-front-matter" },
-      FRONT_MATTER_TEXT,
-      h("a", { href: "https://github.com/Terkwood/BUGOUT" }, "Source code."),
-      " ",
-      h(
-        "a",
-        { href: "https://github.com/Terkwood/BUGOUT/blob/unstable/PRIVACY.md" },
-        "Privacy policy."
-      )
+      FRONT_MATTER_TEXT
     );
 
     if (idleStatus && idleStatus !== IdleStatus.ONLINE) {
@@ -54,7 +47,7 @@ class WelcomeModal extends Component {
         h(
           Dialog.Body,
           null,
-          "🐛 Welcome to BUGOUT! You're joining a  game created by your friend."
+          "Welcome! You're joining a game created by your friend."
         ),
         h(
           Dialog.Footer,
@@ -81,24 +74,8 @@ class WelcomeModal extends Component {
             id,
             isOpen: true,
           },
-          h(Dialog.Header, null, "Go🔹Baduk🔸Weiqi"),
+          h(Dialog.Header, null, "Gomoku🔹Five in a Row"),
           h(Dialog.Body, null, frontMatter),
-          h(
-            Dialog.Footer,
-            null,
-            h(
-              Dialog.FooterButton,
-              {
-                accept: true,
-                onClick: () => {
-                  sabaki.events.emit("bugout-player-wants-bot"); // handled in wait for undo modal
-                  this.setState({ showDialog: false });
-                  update(EntryMethod.PLAY_BOT);
-                },
-              },
-              "🤖 Play KataGo AI 🤖"
-            )
-          ),
           h(
             Dialog.Footer,
             null,

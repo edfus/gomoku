@@ -1,19 +1,9 @@
 {
-  "name": "bugout-browser",
+  "name": "gomoku-frondend",
   "productName": "BUGOUT",
-  "version": "1.4.2",
-  "description": "Graphical user interface for BUGOUT Go/Baduk/Weiqi",
-  "author": "Terkwood <38859656+Terkwood@users.noreply.github.com>",
-  "homepage": "https://github.com/Terkwood/BUGOUT",
+  "version": "0.0.0",
   "license": "MIT",
   "main": "./src/main.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Terkwood/BUGOUT"
-  },
-  "bugs": {
-    "url": "https://github.com/Terkwood/BUGOUT/issues"
-  },
   "build": {
     "appId": "notreally",
     "copyright": "Copyright © 2020 Yichuan Shen (modded by Terkwood)",

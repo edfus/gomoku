@@ -9,7 +9,7 @@ class OpponentQuitModal extends Component {
     this.state = { showDialog: false, scoringMode: false };
 
     // From GTP.js
-    sabaki.events.on("bugout-opponent-quit", () => {
+    sabaki.events.on("gomoku-opponent-quit", () => {
       this.setState({ showDialog: true });
     });
   }

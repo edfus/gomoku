@@ -11,7 +11,7 @@ const {
   EntryMethod,
   emitReadyState,
   Player,
-} = require("../multiplayer/bugout");
+} = require("../multiplayer/gomoku");
 
 // for dev: host port 33012 should be mapped to container 3012
 const GATEWAY_HOST_LOCAL = "ws://localhost:33012/gateway";
@@ -134,10 +134,6 @@ class WebSocketController extends EventEmitter {
 
     this.board = new Board(DEFAULT_BOARD_SIZE, DEFAULT_BOARD_SIZE);
 
-    sabaki.events.on("bot-selected", ({ bot }) => {
-      this.bot = bot;
-    });
-
     sabaki.events.on("human-color-selected", ({ humanColor }) => {
       if (this.deferredPlayBot) {
         this.deferredPlayBot(humanColor);
@@ -153,7 +149,7 @@ class WebSocketController extends EventEmitter {
       }
     });
 
-    sabaki.events.on("bugout-game-ready", ({ boardSize }) => {
+    sabaki.events.on("gomoku-game-ready", ({ boardSize }) => {
       this.boardSize = boardSize;
       this.board = new Board(boardSize, boardSize);
     });
@@ -239,13 +235,13 @@ class WebSocketController extends EventEmitter {
 
       // - In case we need to show that the opponent passed
       // - Used by BugoutSync to delay sync requests after move
-      sabaki.events.emit("bugout-move-made", { coord: syncLastMove.coord });
+      sabaki.events.emit("gomoku-move-made", { coord: syncLastMove.coord });
 
       this.genMoveInProgress = false;
       sabaki.events.emit("gen-move-completed", { done: true });
     });
 
-    sabaki.events.on("bugout-turn", ({ turn }) => (this.turn = turn));
+    sabaki.events.on("gomoku-turn", ({ turn }) => (this.turn = turn));
 
     this.webSocket.addEventListener("close", () => {
       this.removeMessageListener();
@@ -283,24 +279,6 @@ class WebSocketController extends EventEmitter {
         }
       });
     });
-  }
-
-  setupBotGame() {
-    this.deferredPlayBot = (humanColor) =>
-      this.gatewayConn
-        .attachBot(this.boardSize, humanColor, this.bot)
-        .then((reply, err) => {
-          if (!err && reply.type === "BotAttached") {
-            this.gameId = reply.gameId;
-
-            let yourColor =
-              humanColor.toUpperCase()[0] === "B" ? Player.BLACK : Player.WHITE;
-
-            sabaki.events.emit("your-color", { yourColor });
-          } else {
-            throwFatal();
-          }
-        });
   }
 
   onBugoutOnline(_wrc, _werr) {
@@ -497,14 +475,14 @@ class WebSocketController extends EventEmitter {
 
     // - In case we need to show that the opponent passed
     // - Also used by BugoutSync to delay sync requests after move
-    sabaki.events.emit("bugout-move-made", msg);
+    sabaki.events.emit("gomoku-move-made", msg);
 
     this.removeMessageListener();
   }
 
   handleOpponentQuit(resolve) {
     this.gameId = null;
-    sabaki.events.emit("bugout-opponent-quit");
+    sabaki.events.emit("gomoku-opponent-quit");
     sabaki.makeResign();
     sabaki.setMode("scoring");
     resolve({ id: null, error: false });
@@ -559,7 +537,7 @@ class WebSocketController extends EventEmitter {
         this.webSocket.send(payload);
 
         // Sync will be delayed as a result
-        sabaki.events.emit("bugout-make-move");
+        sabaki.events.emit("gomoku-make-move");
       } else if (command.name === "genmove") {
         let opponent = letterToPlayer(command.args[0]);
         this.opponent = opponent;
@@ -769,61 +747,6 @@ class GatewayConn {
     });
   }
 
-  async attachBot(boardSize, humanColor, bot) {
-    return new Promise((resolve, reject) => {
-      let player = otherPlayer(humanColor);
-
-      let requestPayload = {
-        type: "AttachBot",
-        boardSize,
-        player,
-        bot,
-      };
-
-      this.webSocket.addEventListener("message", (event) => {
-        try {
-          let msg = JSON.parse(event.data);
-
-          if (msg.type === "BotAttached") {
-            let isBotPlaying = msg.player === "BLACK";
-
-            sabaki.events.emit("bugout-wait-for-bot", {
-              isModalRelevant: true,
-              isBotAttached: true,
-              isBotPlaying,
-            });
-
-            if (isBotPlaying) {
-              sabaki.events.once("gen-move-completed", () => {
-                // Turn off the modal forever
-                sabaki.events.emit("bugout-wait-for-bot", {
-                  isModalRelevant: false,
-                });
-              });
-            }
-
-            // App.js wants to know about this as well
-            sabaki.events.emit("bugout-bot-attached", msg);
-
-            resolve(msg);
-          }
-          // discard any other messages
-        } catch (err) {
-          console.log(
-            `Error processing websocket message: ${JSON.stringify(err)}`
-          );
-          reject();
-        }
-      });
-
-      sabaki.events.emit("bugout-wait-for-bot", {
-        isModalRelevant: true,
-        isBotAttached: false,
-      });
-      this.webSocket.send(JSON.stringify(requestPayload));
-    });
-  }
-
   async findPublicGame() {
     return new Promise((resolve, reject) => {
       let requestPayload = {
@@ -883,7 +806,7 @@ class GatewayConn {
             resolve(msg);
             // turn off dialog
             this.handleWaitForOpponent({ gap: false, hasEvent: false });
-            sabaki.events.emit("bugout-game-ready", msg);
+            sabaki.events.emit("gomoku-game-ready", msg);
           }
           // discard any other messages
         } catch (err) {
@@ -914,7 +837,7 @@ class GatewayConn {
           if (msg.type === "GameReady") {
             resolve(msg);
             this.handleWaitForOpponent({ gap: false, hasEvent: false });
-            sabaki.events.emit("bugout-game-ready", msg);
+            sabaki.events.emit("gomoku-game-ready", msg);
           } else if (msg.type === "PrivateGameRejected") {
             resolve(msg);
           }
@@ -960,13 +883,13 @@ class GatewayConn {
           if (msg.type === "MoveUndone") {
             this.removeUndoListener();
             resolve(msg);
-            sabaki.events.emit("bugout-move-undone");
-            sabaki.events.emit("bugout-wait-for-undo", {
+            sabaki.events.emit("gomoku-move-undone");
+            sabaki.events.emit("gomoku-wait-for-undo", {
               showWait: false,
               showReject: false,
             });
           } else if (msg.type === "UndoRejected") {
-            sabaki.events.emit("bugout-wait-for-undo", {
+            sabaki.events.emit("gomoku-wait-for-undo", {
               showWait: false,
               showReject: true,
             });
@@ -982,7 +905,7 @@ class GatewayConn {
         }
       });
 
-      sabaki.events.emit("bugout-wait-for-undo", {
+      sabaki.events.emit("gomoku-wait-for-undo", {
         showWait: true,
         showReject: false,
       });
@@ -1037,8 +960,8 @@ class BugoutSync {
     this.delayUntil = undefined;
     this.reqId = undefined;
 
-    sabaki.events.on("bugout-move-made", () => this.delay());
-    sabaki.events.on("bugout-make-move", () => this.delay());
+    sabaki.events.on("gomoku-move-made", () => this.delay());
+    sabaki.events.on("gomoku-make-move", () => this.delay());
   }
 
   activate(gameId) {

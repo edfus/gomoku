@@ -7,7 +7,7 @@ const {
   ColorPref,
   EntryMethod,
   IdleStatus,
-} = require("../../modules/multiplayer/bugout");
+} = require("../../modules/multiplayer/gomoku");
 
 class MultiplayerColorPrefModal extends Component {
   constructor() {

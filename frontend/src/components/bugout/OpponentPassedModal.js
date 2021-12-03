@@ -9,7 +9,7 @@ class OpponentPassedModal extends Component {
     this.state = { showDialog: false, scoringMode: false };
 
     // From GTP.js
-    sabaki.events.on("bugout-move-made", ({ coord }) => {
+    sabaki.events.on("gomoku-move-made", ({ coord }) => {
       if (coord == undefined) {
         this.setState({ showDialog: true });
       }

@@ -56,12 +56,6 @@ const Player = {
   WHITE: "WHITE",
 };
 
-const Bot = {
-  KATAGO_ONE_STAR: "KataGoOneStar",
-  KATAGO_TWO_STARS: "KataGoTwoStars",
-  KATAGO_THREE_STARS: "KataGoThreeStars",
-  KATAGO_FOUR_STARS: "KataGoFourStars",
-};
 
 /** private to isValidGameId */
 const MIN_ID_LENGTH = 4;
@@ -94,11 +88,11 @@ const registerBoardSizeEvents = (app) => {
 
   app.events.on("choose-board-size", ({ boardSize }) => setSize(boardSize));
 
-  app.events.on("bugout-game-ready", ({ boardSize }) => setSize(boardSize));
+  app.events.on("gomoku-game-ready", ({ boardSize }) => setSize(boardSize));
 };
 
 const registerUndoEvent = (app) => {
-  app.events.on("bugout-move-undone", () => {
+  app.events.on("gomoku-move-undone", () => {
     app.onMoveUndone();
   });
 };
@@ -181,7 +175,7 @@ const emitReadyState = (ws, events) => {
 const placeholderColor = Player.BLACK;
 
 const load = () => {
-  let engine = { path: "/bugout", args: "" };
+  let engine = { path: "/gomoku", args: "" };
   let jp = joinPrivateGameParam();
   let readyToEnter = (state) =>
     state.multiplayer &&
@@ -193,7 +187,7 @@ const load = () => {
     joinPrivateGame: jp,
     engine,
     announceTurn: (gameTree, treePosition, events) =>
-      events.emit("bugout-turn", {
+      events.emit("gomoku-turn", {
         turn: [...gameTree.listNodesVertically(treePosition, -1, {})].length,
       }),
     attach: (appAttachEngines, playerColor) => {
@@ -215,7 +209,7 @@ const load = () => {
 
         app.detachEngines();
 
-        app.bugout.attach((a, b) => {
+        app.gomoku.attach((a, b) => {
           app.attachEngines(a, b);
 
           if (app.state.attachedEngines === [null, null]) {
@@ -267,4 +261,3 @@ exports.EntryMethod = EntryMethod;
 exports.Player = Player;
 exports.IdleStatus = IdleStatus;
 exports.BoardSize = BoardSize;
-exports.Bot = Bot;

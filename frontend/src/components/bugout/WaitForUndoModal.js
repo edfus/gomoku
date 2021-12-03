@@ -12,7 +12,7 @@ class WaitForUndoModal extends Component {
     };
 
     // From GTP.js
-    sabaki.events.on("bugout-wait-for-undo", ({ showWait, showReject }) => {
+    sabaki.events.on("gomoku-wait-for-undo", ({ showWait, showReject }) => {
       this.setState({ showWait, showReject });
     });
   }

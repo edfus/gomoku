@@ -3,7 +3,7 @@ const { h, Component } = require("preact");
 // 🦹🏻‍ Bundle Bloat Protector
 import Dialog from "preact-material-components/Dialog";
 
-const { ConnectionState } = require("../../modules/multiplayer/bugout");
+const { ConnectionState } = require("../../modules/multiplayer/gomoku");
 
 const DisconnectedBody = h(
   Dialog.Body,

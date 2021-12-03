@@ -9,20 +9,17 @@ const classNames = require("classnames");
 const MainView = require("./MainView");
 const DrawerManager = require("./DrawerManager");
 
-const { Player } = require("../modules/multiplayer/bugout");
+const { Player } = require("../modules/multiplayer/gomoku");
 
 // BUGOUT 🦹🏻‍ Bundle Bloat Protector
 import BoardSizeModal from "./bugout/BoardSizeModal";
 import GameLobbyModal from "./bugout/WelcomeModal";
-import BotModal from "./bugout/BotModal";
 import IdleStatusModal from "./bugout/IdleStatusModal";
 import InvalidLinkModal from "./bugout/InvalidLinkModal";
 import MultiplayerColorPrefModal from "./bugout/MultiplayerColorPrefModal";
 import OpponentPassedModal from "./bugout/OpponentPassedModal";
 import OpponentQuitModal from "./bugout/OpponentQuitModal";
-import PlayBotColorSelectionModal from "./bugout/PlayBotColorSelectionModal";
 import ReconnectModal from "./bugout/ReconnectModal";
-import WaitForBotModal from "./bugout/WaitForBotModal";
 import WaitForUndoModal from "./bugout/WaitForUndoModal";
 import WaitForOpponentModal from "./bugout/WaitForOpponentModal";
 import WaitForYourColorModal from "./bugout/WaitForYourColorModal";
@@ -40,13 +37,13 @@ const gametree = require("../modules/gametree");
 const helper = require("../modules/helper");
 const setting = remote.require("./setting");
 const sound = require("../modules/sound");
-const bugout = require("../modules/multiplayer/bugout");
+const gomoku = require("../modules/multiplayer/gomoku");
 
 class App extends Component {
   constructor() {
     super();
 
-    this.bugout = bugout.load();
+    this.gomoku = gomoku.load();
 
     window.sabaki = this;
 
@@ -140,15 +137,6 @@ class App extends Component {
     this.updateSettingState();
 
     // from GatewayConn
-    this.events.on("bugout-bot-attached", ({ player }) =>
-      this.setState({
-        multiplayer: {
-          ...this.state.multiplayer,
-          botColor: player,
-        },
-      })
-    );
-
     console.log(`Welcome to Sabaki - BUGOUT ${EDITION} Edition`);
   }
 
@@ -722,7 +710,7 @@ class App extends Component {
         node.data[prevColor] != null && node.data[prevColor][0] === "";
 
       if (prevPass) {
-        this.events.emit("bugout-consecutive-pass");
+        this.events.emit("gomoku-consecutive-pass");
         enterScoring = true;
         this.setMode("scoring");
       }
@@ -1004,7 +992,7 @@ class App extends Component {
         let syncer = new EngineSyncer(engine, {
           entryMethod:
             this.state.multiplayer && this.state.multiplayer.entryMethod,
-          joinPrivateGame: this.bugout.joinPrivateGame,
+          joinPrivateGame: this.gomoku.joinPrivateGame,
           handleWaitForOpponent: (data) => {
             this.setState({
               multiplayer: {
@@ -1303,8 +1291,8 @@ class App extends Component {
 
     state = Object.assign(state, this.inferredState);
 
-    this.bugout.enterGame(this, state); // 😀
-    this.bugout.announceTurn(tree, treePosition, this.events); // 😀
+    this.gomoku.enterGame(this, state); // 😀
+    this.gomoku.announceTurn(tree, treePosition, this.events); // 😀
 
     return h(
       "section",
@@ -1318,7 +1306,7 @@ class App extends Component {
 
       // ↓ BUGOUT ↓
       h(GameLobbyModal, {
-        joinPrivateGame: this.bugout.joinPrivateGame.join,
+        joinPrivateGame: this.gomoku.joinPrivateGame.join,
         idleStatus:
           state.multiplayer &&
           state.multiplayer.idleStatus &&
@@ -1332,21 +1320,6 @@ class App extends Component {
           }),
         appEvents: this.events,
       }),
-      h(BotModal, {
-        data: state.multiplayer,
-        update: (bot) => {
-          // This value is used by other modals to compute whether
-          // they should turn on
-          this.setState({
-            multiplayer: { ...this.state.multiplayer, bot },
-          });
-
-          // This will be intercepted in gtp.js, which is already
-          // establishing backend connectivity while the user
-          // is busy answering the bot dialog
-          this.events.emit("bot-selected", { bot });
-        },
-      }),
       h(WaitForOpponentModal, {
         data: state.multiplayer && state.multiplayer.waitForOpponentModal,
         reconnectDialog: state.multiplayer && state.multiplayer.reconnectDialog,
@@ -1357,9 +1330,6 @@ class App extends Component {
           state.multiplayer &&
           state.multiplayer.idleStatus &&
           state.multiplayer.idleStatus.status,
-      }),
-      h(PlayBotColorSelectionModal, {
-        data: state.multiplayer,
       }),
       h(BoardSizeModal, {
         data: state.multiplayer,
@@ -1384,7 +1354,6 @@ class App extends Component {
       h(InvalidLinkModal),
       h(OpponentPassedModal),
       h(OpponentQuitModal),
-      h(WaitForBotModal),
       h(WaitForUndoModal),
       // ↑ BUGOUT ↑
 

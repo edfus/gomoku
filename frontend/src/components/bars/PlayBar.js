@@ -9,7 +9,7 @@ const t = require("../../i18n").context("PlayBar");
 const helper = require("../../modules/helper");
 const setting = remote.require("./setting");
 
-const { Player } = require("../../modules/multiplayer/bugout");
+const { Player } = require("../../modules/multiplayer/gomoku");
 
 let toggleSetting = (key) => setting.set(key, !setting.get(key));
 
@@ -23,10 +23,6 @@ class PlayBar extends Component {
     super();
     this.state = { showUndo: false, undoDisabled: true };
 
-    sabaki.events.on("bugout-player-wants-bot", () => {
-      this.setState({ showUndo: true });
-    });
-
     // listen for moves, so that we know when to dim the undo button
     sabaki.events.on("they-moved", () => {
       let { showUndo } = this.state;
@@ -36,7 +32,7 @@ class PlayBar extends Component {
     });
 
     // human player moved
-    sabaki.events.on("bugout-make-move", () => {
+    sabaki.events.on("gomoku-make-move", () => {
       let { showUndo } = this.state;
       if (showUndo) {
         this.setState({ undoDisabled: true });

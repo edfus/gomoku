@@ -3,18 +3,17 @@ const { h, Component } = require("preact");
 // 🦹🏻‍ Bundle Bloat Protector
 import Dialog from "preact-material-components/Dialog";
 
-const { BoardSize, EntryMethod } = require("../../modules/multiplayer/bugout");
+const { BoardSize, EntryMethod } = require("../../modules/multiplayer/gomoku");
 
 const ALLOWED_ENTRY_METHODS = [
   EntryMethod.CREATE_PRIVATE,
   EntryMethod.PLAY_BOT,
 ];
 
-const isTurnedOn = (entryMethod, bot) => {
+const isTurnedOn = (entryMethod) => {
   let entryOk =
     entryMethod !== undefined && ALLOWED_ENTRY_METHODS.includes(entryMethod);
-  let ifBotOk = entryMethod === EntryMethod.PLAY_BOT ? bot !== undefined : true;
-  return entryOk && ifBotOk;
+  return entryOk;
 };
 
 class BoardSizeModal extends Component {
@@ -28,11 +27,11 @@ class BoardSizeModal extends Component {
       return h("div", { id });
     }
 
-    let { entryMethod, bot } = data;
+    let { entryMethod } = data;
 
     let { showDialog, turnedOnOnce } = this.state;
 
-    let turnOn = isTurnedOn(entryMethod, bot);
+    let turnOn = isTurnedOn(entryMethod);
 
     let hide = !((turnOn && !turnedOnOnce) || showDialog);
 

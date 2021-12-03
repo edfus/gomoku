@@ -3,7 +3,7 @@ const { h, Component } = require("preact");
 // 🦹🏻‍ Bundle Bloat Protector
 import Dialog from "preact-material-components/Dialog";
 
-const { Visibility } = require("../../modules/multiplayer/bugout");
+const { Visibility } = require("../../modules/multiplayer/gomoku");
 
 class WaitForOpponentModal extends Component {
   constructor() {

@@ -3,7 +3,7 @@ const { h, Component } = require("preact");
 // 🦹🏻‍ Bundle Bloat Protector
 import Dialog from "preact-material-components/Dialog";
 
-const { EntryMethod, IdleStatus } = require("../../modules/multiplayer/bugout");
+const { EntryMethod, IdleStatus } = require("../../modules/multiplayer/gomoku");
 
 const formatSince = (since) => {
   let secs = Math.floor((Date.now() - Date.parse(since)) / 1000);

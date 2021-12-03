@@ -12,9 +12,9 @@ class Bar extends Component {
 
     let onGameOver = () => this.setState({ gameOver: true });
     // From GTP.js
-    sabaki.events.on("bugout-opponent-quit", onGameOver.bind(this));
+    sabaki.events.on("gomoku-opponent-quit", onGameOver.bind(this));
     sabaki.events.on("resign", onGameOver.bind(this));
-    sabaki.events.on("bugout-consecutive-pass", onGameOver.bind(this));
+    sabaki.events.on("gomoku-consecutive-pass", onGameOver.bind(this));
 
     this.componentWillReceiveProps(props);
     this.onCloseButtonClick = () => sabaki.setMode("play");
