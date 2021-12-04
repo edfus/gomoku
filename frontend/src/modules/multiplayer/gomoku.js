@@ -231,14 +231,14 @@ const load = () => {
             app.events.once("your-color", ({ yourColor }) => {
               if (yourColor === Player.WHITE) {
                 app.generateMove({ firstMove: true });
-                app.state.multiplayer.waitForOpponentModal = false;
               }
+              // app.state.multiplayer.waitForOpponentModal = false;
             });
 
             app.events.on("human-color-selected", ({ humanColor }) => {
               if (humanColor[0].toUpperCase() === "W") {
                 app.generateMove({ firstMove: true });
-                app.state.multiplayer.waitForOpponentModal = false;
+                // app.state.multiplayer.waitForOpponentModal = false;
               }
             });
 

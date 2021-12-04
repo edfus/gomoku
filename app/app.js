@@ -67,7 +67,7 @@ class App extends EventEmitter {
         try {
           const data = JSON.parse(payload);
           const command = data.type;
-          if(command !== "Beep")
+          if(command !== "Beep" && command !== "ReqSync")
           console.log('\x1b[33mreceived: %s\x1b[0m', payload);
 
           ctx.data = data;
@@ -90,7 +90,7 @@ class App extends EventEmitter {
       const send = ws.send.bind(ws)
     
       ws.send = (...args) => {
-        if(args[0] !== "{\"type\":\"Boop\"}")
+        if(args[0] !== "{\"type\":\"Boop\"}" && !args[0].startsWith("{\"type\":\"SyncReply\""))
         console.log('\x1b[36msent:', args.length === 1 ? args[0] : args, "\x1b[0m");
         return send(...args);
       }

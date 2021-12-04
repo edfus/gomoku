@@ -38,6 +38,7 @@ class GomokuMatch {
     }
     this.joined = true;
     this.players[1] = this.newPlayer(client, ws);
+    this.reconnect(client, ws);
     return true;
   }
 
@@ -166,13 +167,16 @@ class GomokuMatch {
     this.players[i].event.emit("reconnect");
 
     ws.once("close", () => {
-      this.players[i].disconnected = true;
-      this.players[i].event.emit("disconnect");
-      setTimeout(() => {
-        if(this.players[i].disconnected) {
-          this.quit(client, ws);
-        }
-      }, 5000);
+      console.log("close");
+      if(!this.players[i].quited) {
+        this.players[i].disconnected = true;
+        this.players[i].event.emit("disconnect");
+        setTimeout(() => {
+          if(this.players[i].disconnected) {
+            this.quit(client, ws);
+          }
+        }, 1000);
+      }
     });
   }
 
@@ -180,11 +184,10 @@ class GomokuMatch {
     const opponent = this.getOpponent(client);
     const i = this.players[0].client.id === client.id ? 0 : 1;
 
-    this.players[i].event = null; //
     this.players[i].ws = null;
     this.players[i].quited = true;
     const cb = () => {
-      opponent.ws.send("OpponentQuit");
+      opponent?.ws && opponent.ws.send(serialize("OpponentQuit"));
       // this.gomoku.purgeMatch(this);
     }
 
@@ -192,7 +195,7 @@ class GomokuMatch {
       return this.gomoku.purgeMatch(this);
     }
 
-    if(opponent.disconnected) {
+    if(opponent?.disconnected) {
       opponent.event.once("reconnect", cb);
     } else {
       cb();
@@ -204,6 +207,25 @@ class GomokuMatch {
       return this.players[1];
     } else {
       return this.players[0];
+    }
+  }
+
+  broadcast (type, messsage) {
+    const payload = serialize(type, messsage);
+    for (let i = 0; i < this.players.length; i++) {
+      const player = this.players[i];
+      
+      if(!player || player.quited) {
+        continue;
+      }
+
+      if(player.disconnected) {
+        player.event.once("reconnect", () => {
+          player.ws.send(payload);
+        })
+      } else {
+        player.ws.send(payload);
+      }
     }
   }
 
@@ -220,46 +242,33 @@ class GomokuMatch {
     return this.moves;
   }
 
-  pass (playerColor) {
-    if(this.playerUp !== playerColor) {
-      return false;
-    }
-
-    this.playerUp = 1 - playerColor;
-    this.moves.push({
-      coord: {
-        x: row,
-        y: col
-      },
-      player: playerColor,
-      turn: this.getTurn()
-    });
-    return true;
-  }
-
-  move (row, col, playerColor) {
+  move (coord, playerColor) {
     const player = playerColor === "BLACK" ? 0 : 1;
 
-    if(row < 0 || row >= this.boardSize) {
-      return false;
-    }
-    if(col < 0 || col >= this.boardSize) {
-      return false;
-    }
-    if(this.board[row][col] !== nil) {
-      return false;
-    }
     if(this.playerUp !== player) {
       return false;
     }
+    if(!coord) {
+      // pass
 
-    this.board[row][col] = player;
+    } else {
+      const { x, y } = coord;
+      if(x < 0 || x >= this.boardSize) {
+        return false;
+      }
+      if(y < 0 || y >= this.boardSize) {
+        return false;
+      }
+      if(this.board[x][y] !== nil) {
+        return false;
+      }
+  
+      this.board[x][y] = player;
+    }
+
     this.playerUp = 1 - player;
     this.moves.push({
-      coord: {
-        x: row,
-        y: col
-      },
+      coord,
       player: playerColor,
       turn: this.getTurn()
     });
@@ -275,6 +284,7 @@ class GomokuMatch {
 class GomokuServer {
   clients = new Map()
   matches = new Map()
+  queuing = []
   addClient (client) {
     if(!(client instanceof Client)) {
       return;
@@ -375,17 +385,45 @@ app.use((ctx, next) => {
       const foundMatch = gomoku.getMatch(gameId);
       if(foundMatch && foundMatch.join(ctx.state.client, ctx.ws) == true) {
         ctx.state.match = foundMatch;
-
-        return ctx.ws.send(serialize(
+        
+        return foundMatch.broadcast(
           "GameReady", {
             gameId,
             boardSize: foundMatch.boardSize
           }
-        ));
+        );
       } else {
         return ctx.ws.send(serialize(
           "PrivateGameRejected", {
             gameId
+          }
+        ));
+      }
+    case "FindPublicGame":
+      {
+        while (gomoku.queuing.length) {
+          const foundMatch = gomoku.queuing.shift();
+          if(foundMatch.join(ctx.state.client, ctx.ws) == true) {
+            ctx.state.match = foundMatch;
+            
+            foundMatch._publicready = true;
+            return foundMatch.broadcast(
+              "GameReady", {
+                gameId: foundMatch.id,
+                boardSize: foundMatch.boardSize
+              }
+            );
+          }
+        }
+        
+        const match = new GomokuMatch(gomoku, 19, ctx.state.client, ctx.ws);
+        gomoku.queuing.push(match);
+        ctx.state.match = match;
+  
+        return ctx.ws.send(serialize(
+          "WaitForOpponent", {
+            gameId: match.id,
+            visibility: "Public"
           }
         ));
       }
@@ -424,7 +462,7 @@ app.use(async (ctx, next) => {
   // Following are exclusive middlewares for users being in a match
   if(!ctx.state.match || !ctx.state.match.hasClient(ctx.state.client)) {
     console.error("!ctx.state.match || !ctx.state.match.hasClient(ctx.state.client)");
-    return; // silent
+    return ctx.ws.send(serialize("OpponentQuit")); //
   }
   return next();
 });
@@ -435,10 +473,17 @@ app.use(async (ctx, next) => {
       const match = ctx.state.match;
       if(!match.finished) {
         const color = await match.chooseColor(ctx.state.client, ctx.data.colorPref);
-        return ctx.ws.send(serialize(
+        ctx.ws.send(serialize(
           "YourColor", {
             gameId: match.id,
             yourColor: color
+          }
+        ));
+
+        return ctx.ws.send(serialize(
+          "GameReady", {
+            gameId: match.id,
+            boardSize: match.boardSize
           }
         ));
       } else {
@@ -462,6 +507,10 @@ app.use(async (ctx, next) => {
     case "ReqSync":
       const reqId = ctx.data.reqId;
       // ?
+      if(!ctx.state.quited && match.getOpponent(ctx.state.client)?.quited) {
+        return ctx.ws.send(serialize("OpponentQuit"));
+      }
+
       return ctx.ws.send(serialize(
         "SyncReply", {
           replyTo: reqId,
@@ -481,10 +530,10 @@ app.use(async (ctx, next) => {
       }
 
       const coord = ctx.data.coord;
-      const ret = match.move(coord.x, coord.y, ctx.data.player);
+      const ret = match.move(coord, ctx.data.player);
 
       if(ret === true) {
-        const data = serialize(
+        return match.broadcast(
           "MoveMade", {
             gameId: match.id,
             replyTo: ctx.data.reqId,
@@ -492,22 +541,6 @@ app.use(async (ctx, next) => {
             coord: coord
           }
         );
-
-        const opponent = match.getOpponent(ctx.state.client);
-
-        if(!opponent || opponent.quited) {
-          return ctx.ws.send(data);
-        }
-
-        if(opponent.disconnected) {
-          opponent.event.once("reconnect", () => {
-            opponent.ws.send(data);
-          })
-        } else {
-          opponent.ws.send(data);
-        }
-
-        return ctx.ws.send(data);
       } else {
         return ctx.ws.send(serialize(
           "MoveRejected", {
@@ -517,6 +550,9 @@ app.use(async (ctx, next) => {
           }
         ));
       }
+    case "QuitGame":
+      ctx.state.quited = true;
+      return match.quit(ctx.state.client, ctx.ws);
     default:
       break;
   }
@@ -551,16 +587,4 @@ process.once("SIGQUIT", shutdown);
 
 function uuidv4 () {
   return crypto.randomUUID();
-}
-
-function matchSanityMark () {
-
-}
-
-function matchSanityCheck () {
-
-}
-
-function matchSanityReboost () {
-
 }

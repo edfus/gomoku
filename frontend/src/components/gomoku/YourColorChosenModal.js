@@ -50,22 +50,20 @@ class YourColorChosenModal extends Component {
             null,
             `Please enjoy playing ${yourColor.event.yourColor[0].concat(yourColor.event.yourColor.slice(1).toLowerCase())}.`
           ),
-          yourColor.event.yourColor === "BLACK"
-            ? h(
-                Dialog.Footer,
-                null,
-                h(
-                  Dialog.FooterButton,
-                  {
-                    accept: true,
-                    onClick: () => {
-                      this.setState({ showDialog: false, turnedOnOnce: true });
-                    },
+          h(
+              Dialog.Footer,
+              null,
+              h(
+                Dialog.FooterButton,
+                {
+                  accept: true,
+                  onClick: () => {
+                    this.setState({ showDialog: false, turnedOnOnce: true });
                   },
-                  "OK"
-                )
+                },
+                "OK"
               )
-            : empty
+            )
         )
       : empty;
   }

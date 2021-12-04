@@ -180,7 +180,86 @@ class Board {
     return [x, y];
   }
 
+  getSequenceLongerThan (vertex, player, xInARow) {
+    const [y, x] = vertex;
+    const arrangement = this.arrangement;
+    let i, j, n1, n2;
+    
+    // Check horizontal
+    i = x - 1; j = y; n1 = 0;
+    while (i >= 0 && arrangement[i][j] === player) { n1++; i--; }
+
+    i = x + 1; n2 = 0;
+    while (i < this.width && arrangement[i][j] === player) { n2++; i++; }
+
+    if (n1 + n2 >= xInARow - 1) return {
+      start: {
+        x: x - 1 - (n1 - 1),
+        y: y
+      },
+      end: {
+        x: x + 1 + (n2 - 1),
+        y: y
+      }
+    };
+
+    // Check vertical
+    i = x; j = y - 1; n1 = 0;
+    while (j >= 0 && arrangement[i][j] === player) { n1++; j--; }
+
+    j = y + 1; n2 = 0;
+    while (j < arrangement && arrangement[i][j] === player) { n2++; j++; }
+
+    if (n1 + n2 >= xInARow - 1) return {
+      start: {
+        x: x,
+        y: y - 1 - (n1 - 1)
+      },
+      end: {
+        x: x,
+        y: y + 1 + (n2 - 1)
+      }
+    };
+
+    // Check diagonal (backslash)
+    i = x - 1; j = y + 1; n1 = 0;
+    while (i >= 0 && j < this.height && arrangement[i][j] === player) { n1++; i--; j++; }
+
+    i = x + 1; j = y - 1; n2 = 0;
+    while (i < this.width && j >= 0 && arrangement[i][j] === player) { n2++; i++; j--; }
+
+    if (n1 + n2 >= xInARow - 1) return {
+      start: {
+        x: x - 1 - (n1 - 1),
+        y: y + 1 + (n1 - 1)
+      },
+      end: {
+        x: x + 1 + (n2 - 1),
+        y: y - 1 - (n2 - 1)
+      }
+    };
+
+    // Check reverse diagonal
+    i = x - 1; j = y - 1; n1 = 0;
+    while (i >= 0 && j >= 0 && arrangement[i][j] === player) { n1++; i--; j--; }
+
+    i = x + 1; j = y + 1; n2 = 0;
+    while (i < this.width && j < this.height && arrangement[i][j] === player) { n2++; i++; j++; }
+
+    if (n1 + n2 >= xInARow - 1) return {
+      start: {
+        x: x - 1 - (n1 - 1),
+        y: y - 1 - (n1 - 1)
+      },
+      end: {
+        x: x + 1 + (n2 - 1),
+        y: y + 1 + (n2 - 1)
+      }
+    };
+  }
+
   isValid() {
+    return true;
     let liberties = {};
 
     for (let x = 0; x < this.width; x++) {

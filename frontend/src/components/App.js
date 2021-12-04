@@ -298,7 +298,7 @@ class App extends Component {
     if (
       currentEntry != null &&
       newEntry.timestamp - currentEntry.timestamp <
-        setting.get("edit.history_batch_interval")
+      setting.get("edit.history_batch_interval")
     ) {
       this.history[this.historyPointer] = newEntry;
     } else {
@@ -499,7 +499,7 @@ class App extends Component {
     return this.state.gameTrees.map((tree) => gametree.getHash(tree)).join("-");
   }
 
-  generateFileHash() {}
+  generateFileHash() { }
 
   askForSave() {
     let t = i18n.context("app.file");
@@ -558,14 +558,7 @@ class App extends Component {
           }
         }
       }
-    } else if (["scoring", "estimator"].includes(this.state.mode)) {
-      //NOTE
-      if (button !== 0 || board.get(vertex) === 0) return;
-
-      let { mode, deadStones } = this.state;
-
-      this.setState({ deadStones });
-    }
+    } //NOTE if (["scoring", "estimator"]
 
     this.events.emit("vertexClick");
   }
@@ -580,7 +573,7 @@ class App extends Component {
     let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
     let node = tree.get(treePosition);
-    let board = gametree.getBoard(tree, treePosition);
+    const board = gametree.getBoard(tree, treePosition);
 
     if (typeof vertex == "string") {
       vertex = board.coord2vertex(vertex);
@@ -600,7 +593,7 @@ class App extends Component {
     if (!pass) {
       // Check for ko
 
-      if (prev != null && setting.get("game.show_ko_warning")) {
+      if (false && prev != null && setting.get("game.show_ko_warning")) {
         let hash = board.makeMove(player, vertex).getPositionHash();
         let prevBoard = gametree.getBoard(tree, prev.id);
 
@@ -656,8 +649,9 @@ class App extends Component {
       }
     }
 
-    // Update data
+    const won = !pass && board.getSequenceLongerThan(vertex, player, 5);
 
+    // Update data
     let nextTreePosition;
     let newTree = tree.mutate((draft) => {
       nextTreePosition = draft.appendNode(treePosition, newNodeData);
@@ -675,16 +669,27 @@ class App extends Component {
         Math.random() * (setting.get("sound.capture_delay_max") - delay)
       );
 
-      if (capture || suicide) sound.playCapture(delay);
+      if (capture || suicide) {
+        console.log("capture || suicide");
+        sound.playCapture(delay);
+      }
       sound.playPachi();
     } else {
       sound.playPass();
     }
 
-    // Enter scoring mode after two consecutive passes
-
     let enterScoring = false;
 
+    // Enter scoring mode after one won
+    if (won) {
+      this.events.emit("gomoku-x-in-a-row");
+      enterScoring = true;
+      this.setMode("scoring");
+      this.state.sequencePos = won;
+      this.state.winner = player;
+    }
+
+    // Enter scoring mode after two consecutive passes
     if (pass && createNode && prev != null) {
       let prevColor = color === "B" ? "W" : "B";
       let prevPass =
@@ -917,8 +922,8 @@ class App extends Component {
         ? -1
         : 1
       : data.B != null || (data.HA != null && +data.HA[0] >= 1)
-      ? -1
-      : 1;
+        ? -1
+        : 1;
   }
 
   setPlayer(tree, treePosition, sign) {
@@ -1154,22 +1159,22 @@ class App extends Component {
 
     let responseContent = await (commandName === "genmove"
       ? playerSyncer.controller
-          .sendCommand({ name: commandName, args: [color] })
-          .then((res) => res.content)
+        .sendCommand({ name: commandName, args: [color] })
+        .then((res) => res.content)
       : new Promise((resolve, reject) => {
-          let interval = setting.get("board.analysis_interval").toString();
+        let interval = setting.get("board.analysis_interval").toString();
 
-          playerSyncer.controller
-            .sendCommand(
-              { name: commandName, args: [color, interval] },
-              ({ line }) => {
-                if (line.indexOf("play ") !== 0) return;
-                resolve(line.slice("play ".length).trim());
-              }
-            )
-            .then(() => resolve(null))
-            .catch(reject);
-        })
+        playerSyncer.controller
+          .sendCommand(
+            { name: commandName, args: [color, interval] },
+            ({ line }) => {
+              if (line.indexOf("play ") !== 0) return;
+              resolve(line.slice("play ".length).trim());
+            }
+          )
+          .then(() => resolve(null))
+          .catch(reject);
+      })
     ).catch(() => null);
 
     let sign = color === "B" ? 1 : -1;
@@ -1243,12 +1248,32 @@ class App extends Component {
     let tree = gameTrees[gameIndex];
     let scoreBoard, areaMap;
 
-    if (["scoring", "estimator"].includes(state.mode)) {
+    if (["scoring"].includes(state.mode)) {
       // Calculate area map
 
       scoreBoard = gametree.getBoard(tree, state.treePosition).clone();
 
-      areaMap = influence.areaMap(scoreBoard.arrangement);
+      if(this.state.sequencePos) {
+        scoreBoard.clear();
+
+        const { start, end } = this.state.sequencePos;
+        const player = this.state.winner;
+        let x = start.x, y = start.y; 
+        while (!(x === end.x && y === end.y)) {
+          scoreBoard.arrangement[x][y] = player;
+          if(x !== end.x) {
+            x += end.x - x > 0 ? 1 : -1;
+          }
+          if(y !== end.y) {
+            y += end.y - y > 0 ? 1 : -1;
+          }
+        }
+        scoreBoard.arrangement[end.x][end.y] = player;
+  
+        areaMap = scoreBoard.arrangement;
+      } else {
+        areaMap = influence.areaMap(scoreBoard.arrangement);
+      }
     }
 
     this.inferredState = {

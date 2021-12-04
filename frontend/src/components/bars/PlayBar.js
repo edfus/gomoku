@@ -85,15 +85,15 @@ class PlayBar extends Component {
             checked: setting.get("view.show_move_colorization"),
             click: () => toggleSetting("view.show_move_colorization"),
           },
-          { type: "separator" },
-          {
-            label: t("Es&timate"),
-            click: () => sabaki.setMode("estimator"),
-          },
-          {
-            label: t("&Score"),
-            click: () => sabaki.setMode("scoring"),
-          },
+          // { type: "separator" },
+          // {
+          //   label: t("Es&timate"),
+          //   click: () => sabaki.setMode("estimator"),
+          // },
+          // {
+          //   label: t("&Score"),
+          //   click: () => sabaki.setMode("scoring"),
+          // },
         ],
         left,
         top

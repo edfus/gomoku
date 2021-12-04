@@ -15,6 +15,7 @@ class Bar extends Component {
     sabaki.events.on("gomoku-opponent-quit", onGameOver.bind(this));
     sabaki.events.on("resign", onGameOver.bind(this));
     sabaki.events.on("gomoku-consecutive-pass", onGameOver.bind(this));
+    sabaki.events.on("gomoku-x-in-a-row", onGameOver.bind(this));
 
     this.componentWillReceiveProps(props);
     this.onCloseButtonClick = () => sabaki.setMode("play");

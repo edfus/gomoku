@@ -1,1 +1,0 @@
-{"type":"ReqSync","playerUp":"BLACK","reqId":"a84ce0b4-3f83-4523-b0fd-d87ce2593a95","turn":1,"lastMove":null}
