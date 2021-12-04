@@ -8,7 +8,7 @@ function serialize (type, message) {
   })
 }
 
-class App extends EventEmitter {
+class WSApp extends EventEmitter {
   middlewares = [];
   context = {
     app: this,
@@ -116,5 +116,5 @@ function proxyHeader(req, name) {
     return false;
 }
 
-export default App
+export default WSApp
 export { serialize }

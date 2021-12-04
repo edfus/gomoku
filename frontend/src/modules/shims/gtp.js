@@ -14,9 +14,9 @@ const {
 } = require("../multiplayer/gomoku");
 
 // for dev: host port 33012 should be mapped to container 3012
-const GATEWAY_HOST_LOCAL = "ws://localhost:8080";
+const GATEWAY_HOST_LOCAL = "ws://localhost:3001";
 const GATEWAY_HOST_REMOTE = "wss://api.gomoku.ml:443/";
-const GATEWAY_HOST = GATEWAY_HOST_LOCAL;
+const GATEWAY_HOST = GATEWAY_HOST_REMOTE;
 
 const GATEWAY_BEEP_TIMEOUT_MS = 13333;
 

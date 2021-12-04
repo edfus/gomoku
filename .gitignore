@@ -1,8 +1,8 @@
 node_modules
-stalker
 secrets
 package-lock.json
 wrangler.toml
 worker
 dist
 ref
+.env

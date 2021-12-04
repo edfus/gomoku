@@ -5,7 +5,7 @@ https://api.{$DOMAIN_HOSTNAME:localhost} {
 			path /
 		}
 
-		reverse_proxy @api {$GATEWAY_URL} {
+		reverse_proxy @api {$GOMOKU_API_URL} {
 			header_up X-Forwarded-Host {http.request.host}
 			# WebSocket proxying automatically works in Caddy 2.
 		}
