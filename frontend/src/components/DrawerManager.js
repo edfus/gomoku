@@ -64,7 +64,7 @@ class DrawerManager extends Component {
       {},
       h(ScoreDrawer, {
         show: openDrawer === "score",
-        estimating: mode === "estimator",
+        estimating: false,
         areaMap,
         board: scoreBoard,
         method: scoringMethod,

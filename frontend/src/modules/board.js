@@ -166,26 +166,6 @@ class Board {
       captures: this.captures,
     };
 
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        let sign = areaMap[y][x];
-        if (sign === 0) continue;
-
-        let index = sign > 0 ? 0 : 1;
-
-        score.area[index]++;
-        if (this.get([x, y]) === 0) score.territory[index]++;
-      }
-    }
-
-    score.areaScore = score.area[0] - score.area[1] - komi - handicap;
-    score.territoryScore =
-      score.territory[0] -
-      score.territory[1] +
-      score.captures[0] -
-      score.captures[1] -
-      komi;
-
     return score;
   }
 
@@ -223,32 +203,6 @@ class Board {
 
     sign = sign > 0 ? 1 : -1;
     move.set(vertex, sign);
-
-    // Remove captured stones
-
-    let deadNeighbors = move
-      .getNeighbors(vertex)
-      .filter((n) => move.get(n) === -sign && !move.hasLiberties(n));
-
-    for (let n of deadNeighbors) {
-      if (move.get(n) === 0) continue;
-
-      for (let c of move.getChain(n)) {
-        move.set(c, 0);
-        move.captures[(-sign + 1) / 2]++;
-      }
-    }
-
-    move.set(vertex, sign);
-
-    // Detect suicide
-
-    if (deadNeighbors.length === 0 && !move.hasLiberties(vertex)) {
-      for (let c of move.getChain(vertex)) {
-        move.set(c, 0);
-        move.captures[(sign + 1) / 2]++;
-      }
-    }
 
     return move;
   }

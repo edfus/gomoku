@@ -24,8 +24,6 @@ import WaitForYourColorModal from "./gomoku/WaitForYourColorModal";
 import YourColorChosenModal from "./gomoku/YourColorChosenModal";
 
 const sgf = require("@sabaki/sgf");
-const influence = require("@sabaki/influence");
-
 const i18n = require("../i18n");
 const Board = require("../modules/board");
 const EngineSyncer = require("../modules/enginesyncer");
@@ -67,7 +65,6 @@ class App extends Component {
       scoringMethod: null,
       findText: "",
       findVertex: null,
-      deadStones: [],
       blockedGuesses: [],
 
       // Goban
@@ -561,22 +558,10 @@ class App extends Component {
         }
       }
     } else if (["scoring", "estimator"].includes(this.state.mode)) {
+      //NOTE
       if (button !== 0 || board.get(vertex) === 0) return;
 
       let { mode, deadStones } = this.state;
-      let dead = deadStones.some((v) => helper.vertexEquals(v, vertex));
-      let stones =
-        mode === "estimator"
-          ? board.getChain(vertex)
-          : board.getRelatedChains(vertex);
-
-      if (!dead) {
-        deadStones = [...deadStones, ...stones];
-      } else {
-        deadStones = deadStones.filter(
-          (v) => !stones.some((w) => helper.vertexEquals(v, w))
-        );
-      }
 
       this.setState({ deadStones });
     }
@@ -641,11 +626,11 @@ class App extends Component {
 
       // Check for suicide
 
-      capture = vertexNeighbors.some(
+      capture = false && vertexNeighbors.some(
         (v) => board.get(v) == -player && board.getLiberties(v).length == 1
       );
 
-      suicide =
+      suicide = false && //
         !capture &&
         vertexNeighbors
           .filter((v) => board.get(v) == player)
@@ -1262,18 +1247,7 @@ class App extends Component {
 
       scoreBoard = gametree.getBoard(tree, state.treePosition).clone();
 
-      for (let vertex of state.deadStones) {
-        let sign = scoreBoard.get(vertex);
-        if (sign === 0) continue;
-
-        scoreBoard.captures[sign > 0 ? 1 : 0]++;
-        scoreBoard.set(vertex, 0);
-      }
-
-      areaMap =
-        state.mode === "estimator"
-          ? influence.map(scoreBoard.arrangement, { discrete: true })
-          : influence.areaMap(scoreBoard.arrangement);
+      areaMap = influence.areaMap(scoreBoard.arrangement);
     }
 
     this.inferredState = {

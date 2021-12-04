@@ -35,7 +35,7 @@ class ScoringBar extends Component {
         )
       ),
       " ",
-      type === "scoring" ? t("Select dead stones.") : t("Toggle group status."),
+      t("The game has ended."),
       h(
         "button",
         {
