@@ -14,7 +14,7 @@ const {
 } = require("../multiplayer/gomoku");
 
 // for dev: host port 33012 should be mapped to container 3012
-const GATEWAY_HOST_LOCAL = "ws://localhost:33012/gateway";
+const GATEWAY_HOST_LOCAL = "ws://localhost:8080";
 const GATEWAY_HOST_REMOTE = "wss://api.gomoku.ml:443/";
 const GATEWAY_HOST = GATEWAY_HOST_LOCAL;
 
@@ -695,6 +695,17 @@ class GatewayConn {
     );
 
     sabaki.events.on("resign", () => this.quitGame());
+
+    this.webSocket.addEventListener("message", (event) => {
+      console.log(event.data);
+    });
+
+    const send = this.webSocket.send.bind(this.webSocket)
+    
+    this.webSocket.send = (...args) => {
+      console.log(args.length === 1 ? args[0] : args);
+      return send(...args);
+    }
   }
 
   async reconnect(gameId, resolveMoveMade, board) {

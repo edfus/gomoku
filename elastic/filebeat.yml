@@ -1,0 +1,38 @@
+filebeat.autodiscover.providers:
+  - type: docker
+    hints.enabled: true
+
+filebeat.modules:
+  - module: elasticsearch
+
+filebeat.inputs:
+  - type: container
+    paths: 
+      - '/var/lib/docker/containers/*/*.log'
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+  - decode_json_fields:
+      fields: ["message"]
+      target: "json"
+      overwrite_keys: true
+
+output.elasticsearch:
+  hosts: "${ELASTICSEARCH_HOSTS}"
+  username: '${ELASTICSEARCH_USERNAME}'
+  password: '${ELASTICSEARCH_PASSWORD}'
+  indices:
+    - index: "filebeat-elastic-%{[agent.version]}-%{+yyyy.MM.dd}"
+      when.or:
+        - equals:
+            container.image.name: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:7.13.1}
+        - equals:
+            container.image.name: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:7.13.1}
+        - equals:
+            container.image.name: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:7.13.1}
+    - index: "filebeat-apps-%{[agent.version]}-%{+yyyy.MM.dd}"
+
+logging.json: true
+logging.metrics.enabled: false

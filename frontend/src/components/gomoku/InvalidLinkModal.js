@@ -36,7 +36,7 @@ class InvalidLinkModal extends Component {
               {
                 accept: true,
                 onClick: () => {
-                  location.reload();
+                  location = location.origin;
                 },
               },
               "START OVER"

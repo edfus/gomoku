@@ -1,0 +1,35 @@
+https://api.{$DOMAIN_HOSTNAME:localhost} {
+	route {
+		@api {
+			method GET HEAD POST PUT OPTIONS
+			path /
+		}
+
+		reverse_proxy @api {$GATEWAY_URL} {
+			header_up X-Forwarded-Host {http.request.host}
+			# WebSocket proxying automatically works in Caddy 2.
+		}
+
+		respond "“For the Son of Man came to seek and to save the lost” (Luke 19:10)."
+	}
+
+	log {
+		# output stdout
+		format filter {
+			wrap json
+			fields {
+				request>headers>Authorization delete
+
+				common_log delete -- delete ip address
+				request>remote_addr ip_mask {
+					ipv4 24
+					ipv6 32
+				}
+			}
+		}
+	}
+}
+
+http://127.0.0.1:8081 {
+	respond /health-check 200
+}

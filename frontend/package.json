@@ -1,5 +1,5 @@
 {
-  "name": "gomoku-frondend",
+  "name": "gomoku-frontend",
   "version": "0.0.0",
   "license": "MIT",
   "main": "./src/main.js",

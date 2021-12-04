@@ -1,0 +1,191 @@
+version: "3.9"
+
+services:
+  # caddy
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "26064:443"
+    environment:
+      DOMAIN_HOSTNAME: ${DOMAIN_HOSTNAME}
+      XDG_CONFIG_HOME: /config
+      XDG_DATA_HOME: /data
+      SERVER_KEY: /run/secrets/caddy-server-key
+      SERVER_CERT: /run/secrets/caddy-server-cert
+      GATEWAY_URL: http://web-gateway:3001
+      KIBANA_URL: http://kibana:5601
+      KIBANA_PASSWORD_PATH: /run/secrets/caddy-kibana-endpoint-password
+    working_dir: /etc/caddy/
+    command: [ "/etc/caddy/init.sh" ]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/health-check.sh:/etc/caddy/health-check.sh
+      - ./caddy/init.sh:/etc/caddy/init.sh
+      - caddy_data:/data       # named volume
+      - caddy_config:/config   # named volume
+    networks:
+      - frontend
+      - logging
+    healthcheck:
+      test: 
+        - "CMD"
+        - "./health-check.sh"
+      interval: 3s
+      timeout: 2s
+      retries: 3
+    secrets:
+      - caddy-server-key
+      - caddy-server-cert
+      - caddy-kibana-endpoint-password
+  # web-gateway
+  web-gateway:
+    expose:
+      - "3001"
+    restart: unless-stopped
+    build: ./web-gateway
+    environment:
+      REDIS_PORT: 6379
+      REDIS_HOSTNAME: redis
+      REDIS_USERNAME: web-gateway
+      REDIS_PASSWORD_PATH: /run/secrets/web-gateway-redis-password
+      STALKER_NOTIFY_URL: http://stalker:50439/
+      DOMAIN_ORIGIN: https://${DOMAIN_HOSTNAME}
+      GATEWAY_PORT: 3001
+      NODE_ENV: production # or development
+      PRIMARY_ADMIN_TOKEN_PATH: /run/secrets/web-gateway-primary-admin-token.mjs 
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - redis
+    healthcheck:
+      test: 
+        - "CMD"
+        - "./health-check.sh"
+      interval: 3s
+      timeout: 2s
+      retries: 3
+    secrets:
+      - web-gateway-redis-password
+      - web-gateway-primary-admin-token.mjs
+  # stalker
+  stalker:
+    # tty: true
+    # stdin_open: true
+    expose:
+      - "50439"
+    restart: unless-stopped
+    build: ./apps/prototypes/stalker
+    environment:
+      STALKER_BASIC_INFO_PATH: 
+      STALKER_CREDENTIALS_PATH: /run/secrets/stalker-credentials.mjs
+      STALKER_NOTIFY_PORT: 50439
+      REDIS_PORT: 6379
+      REDIS_HOSTNAME: redis
+      REDIS_USERNAME: stalker
+      REDIS_PASSWORD_PATH: /run/secrets/stalker-redis-password
+    volumes: 
+      - ./apps/health-check-stalker.sh:/app/health-check.sh
+    networks:
+      - backend
+    depends_on:
+      - redis
+    healthcheck:
+      test: 
+        - "CMD"
+        - "./health-check.sh"
+      interval: 3s
+      timeout: 2s
+      retries: 3
+    secrets:
+      - stalker-credentials.mjs
+      - stalker-redis-password
+  # redis
+  redis:
+    expose: 
+      - "6379"
+    restart: unless-stopped
+    image: redis:6-alpine
+    working_dir: /app
+    volumes:
+      - ./redis/redis.conf:/app/redis.conf # :ro will result in an error
+    command: 
+      [ sh, "-c", "redis-server /app/redis.conf --aclfile /run/secrets/redis-acl-file"]
+    healthcheck: # aclfile
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 3
+    networks:
+      - backend
+    secrets:
+      - redis-acl-file
+    labels:
+      co.elastic.metrics/module: "redis"
+      co.elastic.metrics/hosts: "http://redis:6379"
+      co.elastic.metrics/metricsets: "info,key,keyspace"
+  # ---
+  # EFK
+  # https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+  # https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-modules.html
+  # ---
+  filebeat:
+    image: "docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:-7.13.1}"
+    user: root
+    environment: 
+      ELASTIC_VERSION: ${ELASTIC_VERSION:-7.13.1}
+      ELASTICSEARCH_HOSTS: "${ELASTIC_ENDPOINT:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTIC_USERNAME}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./elastic/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+    command: filebeat -e -strict.perms=false
+    restart: none
+    networks:
+      - logging
+  
+  metricbeat:
+    image: "docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION:-7.13.1}"
+    user: root
+    environment:
+      ELASTICSEARCH_HOSTS: "${ELASTIC_ENDPOINT:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTIC_USERNAME}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      volumes:
+      - /:/hostfs:ro
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./elastic/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+    restart: none
+    network_mode: host
+
+secrets:
+  stalker-credentials.mjs:
+    file: ./secrets/stalker-credentials.mjs
+  redis-acl-file:
+    file: ./secrets/redis-acl-file
+  stalker-redis-password:
+    file: ./secrets/stalker-redis-password
+  web-gateway-redis-password:
+    file: ./secrets/web-gateway-redis-password
+  web-gateway-primary-admin-token.mjs:
+    file: ./secrets/web-gateway-primary-admin-token.mjs
+  caddy-server-key:
+    file: ./secrets/caddy-server.key
+  caddy-server-cert:
+    file: ./secrets/caddy-server.crt
+  caddy-kibana-endpoint-password:
+    file: ./secrets/caddy-kibana-endpoint-password
+  
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks: 
+  frontend:
+  backend:
+  logging: 

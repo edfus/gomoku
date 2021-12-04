@@ -24,6 +24,7 @@ import WaitForYourColorModal from "./gomoku/WaitForYourColorModal";
 import YourColorChosenModal from "./gomoku/YourColorChosenModal";
 
 const sgf = require("@sabaki/sgf");
+const influence = require("@sabaki/influence");
 const i18n = require("../i18n");
 const Board = require("../modules/board");
 const EngineSyncer = require("../modules/enginesyncer");
@@ -179,9 +180,9 @@ class App extends Component {
 
     // Handle window closing
 
-    window.addEventListener("beforeunload", (evt) => {
-      evt.returnValue = " ";
-    });
+    // window.addEventListener("beforeunload", (evt) => {
+    //   evt.returnValue = " ";
+    // });
 
     this.newFile();
   }

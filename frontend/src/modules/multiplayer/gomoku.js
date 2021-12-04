@@ -18,9 +18,9 @@ const ConnectionState = {
 };
 
 const ColorPref = {
-  BLACK: "Black",
-  WHITE: "White",
-  ANY: "Any",
+  BLACK: "BLACK",
+  WHITE: "WHITE",
+  ANY: "ANY",
 };
 
 const EntryMethod = {
@@ -63,7 +63,7 @@ const MAX_ID_LENGTH = 30;
 /** private to isValidGameId */
 const re = new RegExp(/^[a-zA-Z0-9]+$/, "m");
 
-const isValidGameId = (p) =>
+const isValidGameId = (p) => true ||
   p && p.length >= MIN_ID_LENGTH && p.length <= MAX_ID_LENGTH && re.test(p);
 
 const joinPrivateGameParam = () => {
@@ -231,12 +231,14 @@ const load = () => {
             app.events.once("your-color", ({ yourColor }) => {
               if (yourColor === Player.WHITE) {
                 app.generateMove({ firstMove: true });
+                app.state.multiplayer.waitForOpponentModal = false;
               }
             });
 
             app.events.on("human-color-selected", ({ humanColor }) => {
               if (humanColor[0].toUpperCase() === "W") {
                 app.generateMove({ firstMove: true });
+                app.state.multiplayer.waitForOpponentModal = false;
               }
             });
 

@@ -48,7 +48,7 @@ class YourColorChosenModal extends Component {
           h(
             Dialog.Body,
             null,
-            `Please enjoy playing ${yourColor.event.yourColor}.`
+            `Please enjoy playing ${yourColor.event.yourColor[0].concat(yourColor.event.yourColor.slice(1).toLowerCase())}.`
           ),
           yourColor.event.yourColor === "BLACK"
             ? h(

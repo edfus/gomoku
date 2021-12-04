@@ -117,25 +117,25 @@ class MainView extends Component {
           showHotspot: node.data.HO != null,
         }),
 
-        // h(ScoringBar, {
-        //   type: "scoring",
-        //   mode,
-        //   method: scoringMethod,
-        //   scoreBoard,
-        //   areaMap,
-        //   komi,
-        //   handicap,
-        // }),
+        h(ScoringBar, {
+          type: "scoring",
+          mode,
+          method: scoringMethod,
+          scoreBoard,
+          areaMap,
+          komi,
+          handicap,
+        }),
 
-        // h(ScoringBar, {
-        //   type: "estimator",
-        //   mode,
-        //   method: scoringMethod,
-        //   scoreBoard,
-        //   areaMap,
-        //   komi,
-        //   handicap,
-        // })
+        h(ScoringBar, {
+          type: "estimator",
+          mode,
+          method: scoringMethod,
+          scoreBoard,
+          areaMap,
+          komi,
+          handicap,
+        })
       )
     );
   }
