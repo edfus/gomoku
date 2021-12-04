@@ -1,4 +1,4 @@
-@import url("../node_modules/pikaday/css/pikaday.css");
+@import url("./pikaday/pikaday.css");
 
 /**
  * Provides general styles for native app like behavior.

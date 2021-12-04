@@ -1,4 +1,4 @@
-@import url("../node_modules/@sabaki/shudan/css/goban.css");
+@import url("./shudan/goban.css");
 
 #main {
   z-index: 10;
@@ -162,7 +162,7 @@ header .menu img {
   top: 0;
   height: 80px;
   width: 70px;
-  background: url("../node_modules/octicons/build/svg/x.svg") center / auto 42px
+  background: url("../img/octicons-x.svg") center / auto 42px
     no-repeat;
   opacity: 0.5;
 }
