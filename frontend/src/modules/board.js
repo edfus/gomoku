@@ -208,7 +208,7 @@ class Board {
     while (j >= 0 && arrangement[i][j] === player) { n1++; j--; }
 
     j = y + 1; n2 = 0;
-    while (j < arrangement && arrangement[i][j] === player) { n2++; j++; }
+    while (j < this.width && arrangement[i][j] === player) { n2++; j++; }
 
     if (n1 + n2 >= xInARow - 1) return {
       start: {

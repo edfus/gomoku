@@ -1,11 +1,12 @@
-const dolm = require("dolm").load({});
+// const dolm = require("dolm").load({});
 const helper = require("../helper");
 
+const t = (...args) => args.join("");
 module.exports = {
-  t: dolm.t,
-  context: dolm.context,
+  t: t,
+  context: context => t,
   loadStrings: helper.noop,
   loadFile: helper.noop,
   loadLang: helper.noop,
-  serialize: dolm.serialize,
+  serialize: t,
 };

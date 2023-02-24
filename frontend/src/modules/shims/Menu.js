@@ -98,7 +98,7 @@ render(
             height: 1em;
             left: 9px;
             top: 7px;
-            background: url('./node_modules/octicons/build/svg/check.svg') left top/contain no-repeat;
+            background: url('./img/octicons-check.svg') left top/contain no-repeat;
             filter: invert(100%);
             -webkit-filter: invert(100%);
         }

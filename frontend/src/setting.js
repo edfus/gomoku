@@ -151,6 +151,7 @@ let defaults = {
   "view.show_graph": true,
   "view.show_move_colorization": false,
   "view.show_move_numbers": false,
+  "view.show_move_numbers_fill_in": false,
   "view.show_next_moves": true,
   "view.show_siblings": true,
   "view.leftsidebar_width": 250,

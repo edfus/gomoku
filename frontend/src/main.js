@@ -1,6 +1,5 @@
 const {app, ipcMain, BrowserWindow, Menu} = require('electron')
 const {join} = require('path')
-const i18n = require('./i18n')
 const setting = require('./setting')
 
 let windows = []

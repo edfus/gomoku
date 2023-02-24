@@ -2,7 +2,7 @@
 
 const EventEmitter = require("events");
 const Board = require("../board");
-const RobustWebSocket = require("robust-websocket");
+const ReconnectingWebSocket = require("reconnecting-websocket").default;
 const uuidv4 = require("uuid/v4");
 
 const ClientId = require("../multiplayer/clientid");
@@ -14,9 +14,13 @@ const {
 } = require("../multiplayer/gomoku");
 
 // for dev: host port 33012 should be mapped to container 3012
-const GATEWAY_HOST_LOCAL = "ws://localhost:3001";
+const GATEWAY_HOST_LOCAL = "ws://192.168.137.1:3001";
 const GATEWAY_HOST_REMOTE = "wss://api.gomoku.ml:443/";
-const GATEWAY_HOST = GATEWAY_HOST_REMOTE;
+const GATEWAY_HOST = (
+  process.env["NODE_ENV"] === "production"
+   ? GATEWAY_HOST_REMOTE
+   : GATEWAY_HOST_LOCAL
+);
 
 const GATEWAY_BEEP_TIMEOUT_MS = 13333;
 
@@ -118,7 +122,7 @@ const throwFatal = () => {
  * wi-fi to reestablish, and we don't want RobustWebSocket
  * giving up too early.
  */
-const ROBUST_WEBSOCKET_TIMEOUT_MS = 300000;
+const ROBUST_WEBSOCKET_TIMEOUT_MS = 1000;
 
 const WEBSOCKET_HEALTH_DELAY_MS = 10000;
 const WEBSOCKET_HEALTH_INTERVAL_MS = 100;
@@ -160,14 +164,18 @@ class WebSocketController extends EventEmitter {
       this.gatewayConn.undoMove(player);
     });
 
+    sabaki.events.on("answer-undo", data => {
+      this.gatewayConn.answerUndoReq(data);
+    });
+
     this.clientId = ClientId.fromStorage();
 
     this.beeping = true;
     setTimeout(() => this.beep(), GATEWAY_BEEP_TIMEOUT_MS);
 
     this.webSocketAddress = webSocketAddress;
-    this.webSocket = new RobustWebSocket(webSocketAddress, null, {
-      timeout: ROBUST_WEBSOCKET_TIMEOUT_MS,
+    this.webSocket = new ReconnectingWebSocket(webSocketAddress, null, {
+      connectionTimeout: ROBUST_WEBSOCKET_TIMEOUT_MS,
     });
 
     let {
@@ -678,8 +686,8 @@ class GatewayConn {
   constructor(webSocket, handleWaitForOpponent, handleYourColor) {
     this.webSocket = webSocket;
 
-    if (handleWaitForOpponent == undefined || handleYourColor == undefined) {
-      throw Exception("malformed gateway conn");
+    if (!handleWaitForOpponent || !handleYourColor) {
+      throw new Error("malformed gateway conn");
     }
 
     // We manage handleWaitForOpponent at this level
@@ -698,6 +706,29 @@ class GatewayConn {
 
     this.webSocket.addEventListener("message", (event) => {
       console.log(event.data);
+      try {
+        let msg = JSON.parse(event.data);
+
+        if (msg.type === "ReqUndoMove") {
+          sabaki.events.emit("gomoku-request-for-undo", {
+            showWait: true,
+            showReject: false,
+            player: msg.player,
+            reqId: msg.reqId
+          });
+        } else if (msg.type === "ReqUndoResponseAck") {
+          sabaki.events.emit("gomoku-request-for-undo", {
+            showWait: false,
+            showReject: false,
+            reqId: msg.id
+          });
+        }
+        // discard any other messages
+      } catch (err) {
+        console.error(
+          `Error processing websocket message: ${JSON.stringify(err)}`
+        );
+      }
     });
 
     const send = this.webSocket.send.bind(this.webSocket)
@@ -883,7 +914,7 @@ class GatewayConn {
           if (msg.type === "MoveUndone") {
             this.removeUndoListener();
             resolve(msg);
-            sabaki.events.emit("gomoku-move-undone");
+            sabaki.events.emit("gomoku-move-undone", msg.player);
             sabaki.events.emit("gomoku-wait-for-undo", {
               showWait: false,
               showReject: false,
@@ -911,6 +942,14 @@ class GatewayConn {
       });
       this.webSocket.send(JSON.stringify(requestPayload));
     });
+  }
+
+  async answerUndoReq(data) {
+    let requestPayload = {
+      type: "ReqUndoResponse",
+      ...data
+    };
+    this.webSocket.send(JSON.stringify(requestPayload));
   }
 
   async chooseColorPref(colorPref) {

@@ -28,7 +28,7 @@ class ScoreRow extends Component {
         "th",
         {},
         h("img", {
-          src: `./node_modules/@sabaki/shudan/css/stone_${sign}.png`,
+          src: `./style/shudan/stone_${sign}.png`,
           alt: sign > 0 ? t("Black") : t("White"),
           width: 24,
           height: 24,

@@ -20,6 +20,7 @@ import OpponentQuitModal from "./gomoku/OpponentQuitModal";
 import ReconnectModal from "./gomoku/ReconnectModal";
 import WaitForUndoModal from "./gomoku/WaitForUndoModal";
 import WaitForOpponentModal from "./gomoku/WaitForOpponentModal";
+import OpponentReqUndoModal from "./gomoku/OpponentReqUndoModal";
 import WaitForYourColorModal from "./gomoku/WaitForYourColorModal";
 import YourColorChosenModal from "./gomoku/YourColorChosenModal";
 
@@ -650,6 +651,8 @@ class App extends Component {
     }
 
     const won = !pass && board.getSequenceLongerThan(vertex, player, 5);
+    const boardFull = !pass && board.arrangement.every(
+      (row, x)=> row.every((sign, y) => (x === vertex.x && y === vertex.y) || sign !== 0))
 
     // Update data
     let nextTreePosition;
@@ -689,13 +692,13 @@ class App extends Component {
       this.state.winner = player;
     }
 
-    // Enter scoring mode after two consecutive passes
-    if (pass && createNode && prev != null) {
+    // Enter scoring mode after two consecutive passes or board being full
+    if (boardFull || pass && createNode && prev != null) {
       let prevColor = color === "B" ? "W" : "B";
       let prevPass =
         node.data[prevColor] != null && node.data[prevColor][0] === "";
 
-      if (prevPass) {
+      if (boardFull || prevPass) {
         this.events.emit("gomoku-consecutive-pass");
         enterScoring = true;
         this.setMode("scoring");
@@ -726,27 +729,65 @@ class App extends Component {
   }
 
   undoMove() {
-    let { currentPlayer } = this.inferredState;
-    let reversePlayer = currentPlayer > 0 ? Player.BLACK : Player.WHITE;
-    this.events.emit("undo", { player: reversePlayer });
+    let player = this.state.playerColor > 0 ? Player.WHITE : Player.BLACK;
+    this.events.emit("undo", { player: player });
   }
 
-  onMoveUndone() {
+  answerUndoReq(granted, reqId, playerColor) {
+    this.events.emit("answer-undo", { 
+      answer: granted ? "MoveUndone" : "UndoRejected",
+      replyTo: reqId,
+      player: playerColor 
+    });
+
+    this.onMoveUndone(playerColor);
+  }
+
+  onMoveUndone(playerColor) {
+    let { currentPlayer } = this.inferredState;
     let { gameTrees, gameIndex, treePosition } = this.state;
     let tree = gameTrees[gameIndex];
 
-    // Try going back two moves
-    let thisMove = tree.get(treePosition);
-    let oneMoveAgo = tree.get(thisMove.parentId);
+    const player = playerColor === "BLACK" ? 1 : -1;
+    let newTree = tree;
+    let topNode = newTree.get(treePosition);
 
-    // Update data
-    let nextTreePosition = oneMoveAgo.parentId;
-    let newTree = tree.mutate((draft) => {
-      draft.removeNode(treePosition); // this move
-      draft.removeNode(thisMove.parentId); // one move ago
+    // if(currentPlayer === player && topNode) {
+    //   newTree = newTree.mutate((draft) => {
+    //     draft.removeNode(topNode.id);
+    //   });
+    //   topNode = newTree.get(topNode.parentId);
+    // }
+
+    function getPlayer (node) {
+      return node.data["B"] ? 1 : -1;
+    }
+
+    while(topNode && player !== getPlayer(topNode)) {
+      newTree = newTree.mutate((draft) => {
+        draft.removeNode(topNode.id);
+      });
+      topNode = newTree.get(topNode.parentId);
+    };
+    
+    if(topNode) {
+      // const { data } = topNode;
+      newTree = newTree.mutate((draft) => {
+        draft.removeNode(topNode.id);
+      });
+      // newTree = newTree.mutate((draft) => {
+      //   draft.appendNode(topNode.id, data);
+      // }); // black magic?
+      // topNode = newTree.get(topNode.id);
+      topNode = newTree.get(topNode.parentId);
+    }
+
+    this.setCurrentTreePosition(newTree, topNode ? topNode.id : 0, {
+      clearCache: true,
     });
-
-    this.setCurrentTreePosition(newTree, nextTreePosition);
+    
+    // this.inferredState.currentPlayer = player;
+    // this.state.currentPlayer = player;
   }
 
   // Navigation
@@ -763,7 +804,7 @@ class App extends Component {
     let currents = gameCurrents[gameIndex];
 
     let n = tree.get(id);
-    while (n.parentId != null) {
+    while (n && n.parentId != null) {
       // Update currents
 
       currents[n.parentId] = n.id;
@@ -988,10 +1029,28 @@ class App extends Component {
             });
           },
           handleYourColor: (data) => {
+            if(data.event?.yourColor) {
+              this.setState({
+                multiplayer: {
+                  ...this.state.multiplayer,
+                  yourColor: data,
+                },
+                playerColor: data.event.yourColor
+              });
+            } else {
+              this.setState({
+                multiplayer: {
+                  ...this.state.multiplayer,
+                  yourColor: data,
+                }
+              });
+            }
+          },
+          handleReqUndo: (data) => {
             this.setState({
               multiplayer: {
                 ...this.state.multiplayer,
-                yourColor: data,
+                reqUndo: data,
               },
             });
           },
@@ -1249,6 +1308,10 @@ class App extends Component {
     let scoreBoard, areaMap;
 
     if (["scoring"].includes(state.mode)) {
+      if(!setting.get("view.show_move_numbers")) {
+        setting.set("view.show_move_numbers", true);
+        setting.set("view.show_move_numbers_fill_in", true);
+      }
       // Calculate area map
 
       scoreBoard = gametree.getBoard(tree, state.treePosition).clone();
@@ -1273,6 +1336,11 @@ class App extends Component {
         areaMap = scoreBoard.arrangement;
       } else {
         areaMap = influence.areaMap(scoreBoard.arrangement);
+      }
+    } else {
+      if(setting.get("view.show_move_numbers_fill_in")) {
+        setting.set("view.show_move_numbers_fill_in", false);
+        setting.set("view.show_move_numbers", false);
       }
     }
 
@@ -1348,6 +1416,7 @@ class App extends Component {
       h(IdleStatusModal, { data: state.multiplayer }),
       h(InvalidLinkModal),
       h(OpponentPassedModal),
+      h(OpponentReqUndoModal),
       h(OpponentQuitModal),
       h(WaitForUndoModal),
       // ↑ 😇 ↑

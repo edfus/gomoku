@@ -25,7 +25,7 @@ class WaitForUndoModal extends Component {
         isOpen: true,
       },
       h(Dialog.Header, null, "Undo Move"),
-      h(Dialog.Body, null, "Please wait for the server."),
+      h(Dialog.Body, null, "Asking your opponent for consent, please wait..."),
       h(Dialog.Footer, null)
     );
   }
@@ -38,7 +38,7 @@ class WaitForUndoModal extends Component {
         isOpen: true,
       },
       h(Dialog.Header, null, "Undo Move"),
-      h(Dialog.Body, null, "Undo failed."),
+      h(Dialog.Body, null, "Undo request denied."),
       h(
         Dialog.Footer,
         null,

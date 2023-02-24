@@ -21,20 +21,11 @@ const isPlayerTurn = (colorNum) => {
 class PlayBar extends Component {
   constructor() {
     super();
-    this.state = { showUndo: false, undoDisabled: true };
+    this.state = { undoDisabled: false };
 
     // listen for moves, so that we know when to dim the undo button
-    sabaki.events.on("they-moved", () => {
-      let { showUndo } = this.state;
-      if (showUndo) {
-        this.setState({ undoDisabled: false });
-      }
-    });
-
-    // human player moved
-    sabaki.events.on("gomoku-make-move", () => {
-      let { showUndo } = this.state;
-      if (showUndo) {
+    sabaki.events.on("gomoku-wait-for-undo", ({showReject}) => {
+      if (showReject) {
         this.setState({ undoDisabled: true });
       }
     });
@@ -71,7 +62,7 @@ class PlayBar extends Component {
           },
           { type: "separator" },
           {
-            label: t("Show &Coordinates"),
+            label: t("Show Coordinates"),
             checked: setting.get("view.show_coordinates"),
             click: () => toggleSetting("view.show_coordinates"),
           },
@@ -81,19 +72,20 @@ class PlayBar extends Component {
             click: () => toggleSetting("view.show_move_numbers"),
           },
           {
-            label: t("Show Move Colori&zation"),
+            label: t("Show Move Colorization"),
             checked: setting.get("view.show_move_colorization"),
             click: () => toggleSetting("view.show_move_colorization"),
           },
-          // { type: "separator" },
-          // {
-          //   label: t("Es&timate"),
-          //   click: () => sabaki.setMode("estimator"),
-          // },
-          // {
-          //   label: t("&Score"),
-          //   click: () => sabaki.setMode("scoring"),
-          // },
+
+          { type: "separator" },
+          {
+            label: t("Resign"),
+            click: this.handleQuitClick,
+          },
+          {
+            label: t("Pass Your Turn"),
+            click: this.handlePassClick,
+          },
         ],
         left,
         top
@@ -117,17 +109,15 @@ class PlayBar extends Component {
   }
 
   renderUndo() {
-    let { showUndo, undoDisabled } = this.state;
-    return showUndo
-      ? h(
+    let { undoDisabled } = this.state;
+    return h(
           "a",
           {
-            class: "undo-button",
+            class: "pass-button",
             onClick: this.handleUndoClick,
           },
-          h("button", { disabled: undoDisabled }, t("UNDO"))
-        )
-      : this.renderSpacer();
+          h("button", { disabled: undoDisabled }, t("Undo"))
+        );
   }
 
   render({
@@ -162,16 +152,8 @@ class PlayBar extends Component {
         }),
       },
 
-      h(
-        "a",
-        {
-          class: "pass-button",
-          onClick: this.handlePassClick,
-        },
-        h("button", {}, t("PASS"))
-      ),
-
       this.renderUndo(),
+      this.renderSpacer(),
 
       h(
         "span",

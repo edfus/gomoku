@@ -17,7 +17,7 @@ class WaitForOpponentModal extends Component {
         this.setState({ copied: true });
       },
       () => {
-        throw Exception("clipboard write failed");
+        throw new Error("clipboard write failed");
       }
     );
   }

@@ -18,13 +18,13 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy/health-check.sh:/etc/caddy/health-check.sh
       - ./caddy/init.sh:/etc/caddy/init.sh
-      - caddy_data:/data       # named volume
-      - caddy_config:/config   # named volume
+      - caddy_data:/data # named volume
+      - caddy_config:/config # named volume
     networks:
       - frontend
       - logging
     healthcheck:
-      test: 
+      test:
         - "CMD"
         - "./health-check.sh"
       interval: 3s
@@ -48,29 +48,27 @@ services:
       - backend
     depends_on:
       - redis
-    healthcheck:
-      test: 
-        - "CMD"
-        - "./health-check.sh"
-      interval: 3s
-      timeout: 2s
-      retries: 3
     secrets:
       - gomoku-app-redis-password
- 
+
   # redis
   redis:
-    expose: 
+    expose:
       - "6379"
     restart: unless-stopped
     image: redis:6-alpine
     working_dir: /app
     volumes:
       - ./redis/redis.conf:/app/redis.conf # :ro will result in an error
-    command: 
-      [ sh, "-c", "redis-server /app/redis.conf --aclfile /run/secrets/redis-acl-file"]
-    healthcheck: # aclfile
-      test: ["CMD", "redis-cli", "ping"]
+    command:
+      [
+        sh,
+        "-c",
+        "redis-server /app/redis.conf --aclfile /run/secrets/redis-acl-file"
+      ]
+    healthcheck:
+      # aclfile
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 3s
       timeout: 2s
       retries: 3
@@ -82,16 +80,20 @@ services:
       co.elastic.metrics/module: "redis"
       co.elastic.metrics/hosts: "http://redis:6379"
       co.elastic.metrics/metricsets: "info,key,keyspace"
-  
+
   # ---
+
   # EFK
+
   # https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+
   # https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-modules.html
+
   # ---
   filebeat:
     image: "docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:-7.13.1}"
     user: root
-    environment: 
+    environment:
       ELASTIC_VERSION: ${ELASTIC_VERSION:-7.13.1}
       ELASTICSEARCH_HOSTS: "${ELASTIC_ENDPOINT:-http://elasticsearch:9200}"
       ELASTICSEARCH_USERNAME: "${ELASTIC_USERNAME}"
@@ -104,7 +106,7 @@ services:
     restart: none
     networks:
       - logging
-  
+
   metricbeat:
     image: "docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION:-7.13.1}"
     user: root
@@ -112,7 +114,7 @@ services:
       ELASTICSEARCH_HOSTS: "${ELASTIC_ENDPOINT:-http://elasticsearch:9200}"
       ELASTICSEARCH_USERNAME: "${ELASTIC_USERNAME}"
       ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
-      volumes:
+    volumes:
       - /:/hostfs:ro
       - /proc:/hostfs/proc:ro
       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
@@ -126,12 +128,12 @@ secrets:
     file: ./secrets/redis-acl-file
   gomoku-app-redis-password:
     file: ./secrets/gomoku-app-redis-password
-  
+
 volumes:
   caddy_data:
   caddy_config:
 
-networks: 
+networks:
   frontend:
   backend:
-  logging: 
+  logging:

@@ -39,8 +39,8 @@ class WSApp extends EventEmitter {
   callback () {
     if (!this.listenerCount('error')) {
       console.info(
-        "\x1b[1m\x1b[30mNo listener attached for 'error' event,",
-        "forwarding all errors to console...\x1b[0m"
+        "\x1b[1m\x1b[30mNo listener attached for the 'error' event,",
+        "forwarding all errors to STDERR...\x1b[0m"
       );
       this.on('error', console.error);
     }

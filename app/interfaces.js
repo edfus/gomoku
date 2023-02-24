@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { serialize } from './app.js';
-import crypto from "crypto";
+import { uuidv4 } from "./helpers.js";
 
 class Client {
   constructor (id) {
@@ -39,7 +39,7 @@ class GomokuMatch {
 
   newPlayer (client, ws) {
     return {
-      color: nil,
+      color: "",
       colorPref: "",
       client,
       ws,
@@ -162,20 +162,22 @@ class GomokuMatch {
     this.players[i].event.emit("reconnect");
 
     ws.once("close", () => {
-      console.log("close");
+      this.players[i].disconnected = true;
+      this.players[i].event.emit("disconnect");
+      if(!this.players[1 - i]) {
+        return this.quit(client);
+      }
       if(!this.players[i].quited) {
-        this.players[i].disconnected = true;
-        this.players[i].event.emit("disconnect");
         setTimeout(() => {
           if(this.players[i].disconnected) {
-            this.quit(client, ws);
+            this.quit(client);
           }
-        }, 1000);
+        }, 2000);
       }
     });
   }
 
-  quit(client, ws) {
+  quit(client) {
     const opponent = this.getOpponent(client);
     const i = this.players[0].client.id === client.id ? 0 : 1;
 
@@ -187,6 +189,7 @@ class GomokuMatch {
     }
 
     if(opponent?.quited) {
+      this.finished = true;
       return this.gomoku.purgeMatch(this);
     }
 
@@ -194,6 +197,14 @@ class GomokuMatch {
       opponent.event.once("reconnect", cb);
     } else {
       cb();
+    }
+  }
+
+  getPlayer (client) {
+    if(this.players[0]?.client?.id === client.id) {
+      return this.players[0];
+    } else {
+      return this.players[1];
     }
   }
 
@@ -224,20 +235,58 @@ class GomokuMatch {
     }
   }
 
-  getPlayerUp () {
-    return this.playerUp === 0 ? "BLACK" : "WHITE";
+  locked = false;
+  lockPromise = null;
+  async lock () {
+    while(this.locked) {
+      await this.lockPromise.promise;
+    }
+    this.locked = true;
+    this.lockPromise = {};
+    this.lockPromise.initing = true;
+    this.lockPromise.promise = new Promise((resolve, reject) => {
+      if(this.lockPromise.resolved) {
+        return resolve();
+      }
+      this.lockPromise.resolve = resolve;
+      this.lockPromise.reject = reject;
+      this.lockPromise.initing = false;
+    })
+  }
+
+  async unlock () {
+    this.locked = false;
+    if(this.lockPromise.initing) {
+      this.lockPromise.resolved = true;
+    } else {
+      this.lockPromise.resolve();
+    }
+  }
+
+  async getPlayerUp () {
+    await this.lock();
+    const playerUp = this.playerUp;
+    await this.unlock();
+    return playerUp === 0 ? "BLACK" : "WHITE";
   }
 
   moves = [];
-  getTurn () {
-    return this.moves.length + 1;
+  async getTurn () {
+    await this.lock();
+    const turn = this.moves.length + 1;
+    await this.unlock();
+    return turn;
   }
 
-  getMoves () {
-    return this.moves;
+  async getMoves () {
+    await this.lock();
+    const moves = this.moves;
+    await this.unlock();
+    return moves;
   }
 
-  move (coord, playerColor) {
+  async move (coord, playerColor) {
+    await this.lock();
     const player = playerColor === "BLACK" ? 0 : 1;
 
     if(this.playerUp !== player) {
@@ -265,14 +314,10 @@ class GomokuMatch {
     this.moves.push({
       coord,
       player: playerColor,
-      turn: this.getTurn()
+      turn: this.moves.length + 1
     });
+    await this.unlock();
     return true;
-  }
-
-  isBoardFull () {
-    return this.board.every(
-      row => row.every(vertex => vertex === nil))
   }
 }
 
@@ -299,6 +344,14 @@ class GomokuServer {
     );
   }
 
+  hasMatch(id) {
+    if(id instanceof GomokuMatch) {
+      return this.matches.has(id.id);
+    } else {
+      return this.matches.has(id);
+    }
+  }
+
   getMatch (id) {
     return this.matches.get(
       id
@@ -311,7 +364,3 @@ class GomokuServer {
 }
 
 export { Client, GomokuMatch, GomokuServer };
-
-function uuidv4 () {
-  return crypto.randomUUID();
-}

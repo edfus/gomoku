@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 
 let noopPath = path.join(__dirname, "src/modules/shims/noop");
 let emptyPath = path.join(__dirname, "src/modules/shims/empty");
@@ -11,7 +12,7 @@ module.exports = (env, argv) => ({
     path: __dirname,
   },
 
-  devtool: argv.mode === "production" ? false : "cheap-module-eval-source-map",
+  devtool: argv.mode === "production" ? false : "eval-source-map",
 
   node: {
     Buffer: false,
@@ -20,6 +21,15 @@ module.exports = (env, argv) => ({
   node: {
     __dirname: false,
   },
+
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(argv.mode)
+    }),
+    new webpack.DefinePlugin({
+      'process.platform': JSON.stringify("browser")
+    })
+  ],
 
   resolve: {
     alias: {
@@ -53,6 +63,9 @@ module.exports = (env, argv) => ({
       "./TextSpinner": noopPath,
       "../TextSpinner": noopPath,
       "./bars/AutoplayBar": noopPath,
+    },
+    fallback: {
+      "path": require.resolve("path-browserify")
     },
   },
 
